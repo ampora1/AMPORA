@@ -30,7 +30,7 @@ export default function TripPlanner() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FFEDF3] via-[#ADEED9] to-[#56DFCF] flex flex-col items-center pt-24 pb-10 px-6">
+    <div className="w-screen min-h-screen bg-gradient-to-br from-[#FFEDF3] via-[#ADEED9] to-[#56DFCF] flex flex-col items-center pt-24 pb-10 px-6">
       <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-3 gap-10">
 
         {/* LEFT CARD - INPUT SECTION */}
