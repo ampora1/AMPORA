@@ -1,158 +1,69 @@
-import { useState } from "react";
+import React from "react";
+import roadtrip from "../assets/road-trip.png";
 
-export default function TripPlanner() {
-  const [vehicle, setVehicle] = useState("");
-  const [location, setLocation] = useState("");
-  const [destination, setDestination] = useState("");
-  const [planned, setPlanned] = useState(false);
-
-  // Mock vehicle data
-  const vehicles = [
-    { id: 1, name: "Nissan Leaf", range: "270 km" },
-    { id: 2, name: "BMW i3", range: "300 km" },
-    { id: 3, name: "Tesla Model 3", range: "500 km" },
-  ];
-
-  // Mock station recommendations
-  const stations = [
-    { id: 1, name: "Colombo SuperCharge", distance: "2.5 km", status: "Available" },
-    { id: 2, name: "Kandy EV Hub", distance: "4.8 km", status: "In Use" },
-    { id: 3, name: "Negombo GreenCharge", distance: "6.2 km", status: "Available" },
-  ];
-
-  const handleUseGPS = () => {
-    setLocation("📍 GPS Location Detected");
-  };
-
-  const handlePlan = () => {
-    if (vehicle && location && destination) setPlanned(true);
-    else alert("Please fill in all fields before planning your trip!");
-  };
-
+const TripPlanner = () => {
   return (
-    <div className="w-screen min-h-screen bg-gradient-to-br from-[#FFEDF3] via-[#ADEED9] to-[#56DFCF] flex flex-col items-center pt-24 pb-10 px-6">
-      <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-3 gap-10">
+    <div className="w-screen min-h-screen bg-[#EDFFFF] flex flex-col items-center">
 
-        {/* LEFT CARD - INPUT SECTION */}
-        <div className="bg-white/70 backdrop-blur-lg shadow-xl rounded-2xl border border-[#ADEED9] p-8">
-          <h2 className="text-3xl font-bold text-[#043D3A] mb-8">
-            🧭 Plan Your Trip
-          </h2>
+      {/* TOP BANNER */}
+      <div className="relative w-full h-[45vh] bg-gradient-to-r from-emerald-300 to-emerald-500 rounded-b-[80px] overflow-hidden">
 
-          {/* Vehicle Select */}
-          <div className="mb-6">
-            <label className="block text-[#043D3A]/80 font-semibold mb-2">
-              Select Your Vehicle
-            </label>
-            <select
-              value={vehicle}
-              onChange={(e) => setVehicle(e.target.value)}
-              className="w-full px-4 py-3 border border-[#ADEED9] rounded-xl text-[#043D3A] focus:ring-2 focus:ring-[#0ABAB5]"
-            >
-              <option value="">-- Choose Vehicle --</option>
-              {vehicles.map((v) => (
-                <option key={v.id} value={v.name}>
-                  {v.name} ({v.range})
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* CURVED WAVE */}
+        <svg
+          className="absolute bottom-0 left-0 w-full"
+          viewBox="0 0 1440 320"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fill="#EDFFFF"
+            d="M0,256L40,245.3C80,235,160,213,240,197.3C320,181,400,171,480,176C560,181,640,203,720,218.7C800,235,880,245,960,234.7C1040,224,1120,192,1200,170.7C1280,149,1360,139,1400,133.3L1440,128L1440,320L0,320Z"
+          ></path>
+        </svg>
 
-          {/* Location Input */}
-          <div className="mb-6">
-            <label className="block text-[#043D3A]/80 font-semibold mb-2">
-              Your Current Location
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="Enter location manually..."
-                className="flex-1 px-4 py-3 border border-[#ADEED9] rounded-xl text-[#043D3A] focus:ring-2 focus:ring-[#0ABAB5]"
-              />
-              <button
-                onClick={handleUseGPS}
-                className="bg-[#0ABAB5] hover:bg-[#56DFCF] text-white px-5 py-3 rounded-xl font-semibold shadow-md"
-              >
-                📍
-              </button>
-            </div>
-          </div>
+        {/* BANNER CONTENT */}
+        <div className="absolute top-16 w-full flex flex-col items-center text-white">
+          <h1 className="text-4xl font-bold drop-shadow-md">PLAN YOUR NEXT TRIP</h1>
 
-          {/* Destination Input */}
-          <div className="mb-8">
-            <label className="block text-[#043D3A]/80 font-semibold mb-2">
-              Destination
-            </label>
+          <div className="mt-6 flex gap-4 px-4 w-full justify-center">
             <input
               type="text"
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              placeholder="Enter your destination..."
-              className="w-full px-4 py-3 border border-[#ADEED9] rounded-xl text-[#043D3A] focus:ring-2 focus:ring-[#0ABAB5]"
+              placeholder="Starting point"
+              className="w-[250px] h-[50px] rounded-xl px-4 bg-white text-black border-2 border-emerald-400"
+            />
+            <input
+              type="text"
+              placeholder="Destination"
+              className="w-[250px] h-[50px] rounded-xl px-4 bg-white text-black border-2 border-emerald-400"
             />
           </div>
 
-          {/* Plan Button */}
-          <button
-            onClick={handlePlan}
-            className="w-full bg-[#0ABAB5] hover:bg-[#56DFCF] text-white text-lg font-semibold py-3 rounded-xl shadow-md transition-transform hover:scale-105"
-          >
-            🤖 Plan with AI
+          <button className="mt-6 bg-white text-emerald-600 px-6 py-3 rounded-xl font-semibold shadow hover:bg-gray-100">
+            Plan Trip
           </button>
+        </div>
+      </div>
 
-          {/* Recommended Stations */}
-          {planned && (
-            <div className="mt-10">
-              <h3 className="text-xl font-bold text-[#043D3A] mb-4">
-                🔋 Recommended Charging Stations
-              </h3>
-              <div className="space-y-4">
-                {stations.map((s) => (
-                  <div
-                    key={s.id}
-                    className="bg-[#FFEDF3] border border-[#ADEED9] rounded-xl p-4 shadow-sm hover:shadow-md transition"
-                  >
-                    <h4 className="font-bold text-[#0ABAB5]">{s.name}</h4>
-                    <p className="text-sm text-[#043D3A]/70">{s.distance}</p>
-                    <span
-                      className={`inline-block mt-2 px-3 py-1 text-sm rounded-full ${
-                        s.status === "Available"
-                          ? "bg-[#56DFCF] text-[#043D3A]"
-                          : s.status === "In Use"
-                          ? "bg-[#0ABAB5]/70 text-white"
-                          : "bg-gray-300 text-gray-600"
-                      }`}
-                    >
-                      {s.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+      {/* BODY SECTION */}
+      <div className="mt-10 w-10/12 bg-white rounded-3xl shadow-lg p-8 flex gap-10">
+
+        <img src={roadtrip} className="w-[180px] h-[180px]" alt="Roadtrip icon" />
+
+        <div>
+          <h2 className="text-2xl font-bold text-emerald-500">Trip Planner</h2>
+          <p className="mt-4 text-gray-700 w-10/12 leading-relaxed">
+            Plan your electric journey easily with real-time charging station
+            locations, distance calculations, and optimized energy usage.  
+            Enter your start and destination to see the best EV-friendly route.
+          </p>
+
+          <button className="mt-6 border-2 border-emerald-400 px-6 py-2 rounded-xl text-emerald-500 hover:bg-emerald-50">
+            Start Planning
+          </button>
         </div>
 
-        {/* MAP SECTION */}
-        <div className="lg:col-span-2 bg-[#ADEED9]/60 backdrop-blur-md border border-[#56DFCF] rounded-2xl shadow-lg flex flex-col items-center justify-center relative overflow-hidden">
-          {!planned ? (
-            <p className="text-[#043D3A]/70 text-xl font-medium">
-              🗺️ Map preview will appear here after planning your route.
-            </p>
-          ) : (
-            <>
-              <div className="absolute inset-0 bg-gradient-to-tr from-[#56DFCF]/40 to-[#FFEDF3]/30 rounded-2xl"></div>
-              <p className="relative text-[#043D3A]/80 text-2xl font-semibold">
-                AI-Optimized Route Loaded ✅
-              </p>
-              <p className="relative text-[#043D3A]/70 mt-2">
-                Showing optimal path with charging stops...
-              </p>
-            </>
-          )}
-        </div>
       </div>
     </div>
   );
-}
+};
+
+export default TripPlanner;
