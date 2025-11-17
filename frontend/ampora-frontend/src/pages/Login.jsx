@@ -13,9 +13,7 @@ export default function Login() {
     e.preventDefault();
 
     console.log("Email:", email);
-    console.log("Password:", password);
-
-   
+    console.log("Password:", password); 
   };
 
   return (
@@ -38,19 +36,18 @@ export default function Login() {
 
                   <div className='flex flex-row gap-7 p-4 ml-5' >
                       <p> New user</p>
-                      <p className='text-[#0D9489]'>| Create an Account</p>
-                 
+                      <Link ><p className='text-[#0ABAB5] hover:underline cursor-pointer'>| Create an Account</p></Link>
                   </div>
-                 
+
                   {/* Google Login */}
-                  <a className="w-[250px] h-[30px] flex items-center justify-center gap-2 p-6 ml-7 bg-black text-white font-inter rounded-full shadow-md">
+                  <a className="w-[250px] h-[30px] flex items-center justify-center gap-2 p-6 ml-7 bg-black hover:bg-[#505252] text-white font-inter rounded-full shadow-md" href=''>
                       <img
                            src="https://www.svgrepo.com/show/355037/google.svg"
                            alt="Google"
-                          className="w-4 text-white"
-                      />Sign in with Google
+                          className="w-4"
+                      /><p className=' text-white'>Sign in with Google</p>
                   </a> 
-                  <p className="text-center font-[400px] font-inter text-gray-500 p-3">Or sign with email</p>
+                  <Link ><p className="text-center font-[400px] font-inter text-gray-500 p-3 hover:underline">Or sign with email</p></Link>
 
                   <form className='flex flex-col items-center p-6'>
                       {/* Email */}
@@ -75,15 +72,18 @@ export default function Login() {
                       />
 
                       <div className="flex flex-row gap-8 w-[381px] pl-12 mt-2">
-                          <label className="flex items-center gap-2">
+                          <label className="flex items-center gap-2 ">
                           <input type="checkbox" />
-                              Remember me
-                          </label> 
-                          <a href="/forgot" className='text-[black]'>
-                              Forgot Password?
+                           Remember me
+                           </label>
+                             
+                        
+                          <a href="/forgot" >
+                            <p className='text-gray-700 hover:underline' > Forgot Password?</p>
                           </a>
                       </div>
                       <a
+                        href=''
                         onClick={handleLogin}
                         className="bg-[#0ABAB5] hover:bg-[#56DFCF] text-white font-inter rounded-lg shadow-md transition-transform  w-[300px] h-[50px] px-8 py-3 mt-10 text-center"
                       >
