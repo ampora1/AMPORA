@@ -1,550 +1,552 @@
-# app.py - Fixed version
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from flask import Flask, request, jsonify, render_template, send_file, send_from_directory
+from flask_cors import CORS
 import os
-import uvicorn
 from datetime import datetime
-
-# Import our route planner
 from enhanced_ev_planner import EnhancedEVPlanner
 
-app = FastAPI(
-    title="Sri Lanka EV Route Planner",
-    description="Find routes with charging stations",
-    version="1.0.0"
-)
+app = Flask(__name__)
+CORS(app)
 
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
-# Route planner instance
 planner = EnhancedEVPlanner()
 
-# Static files directory
+
 os.makedirs("static", exist_ok=True)
 os.makedirs("maps", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-class RouteRequest(BaseModel):
-    start: str
-    end: str
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sri Lanka EV Route Planner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-class RouteResponse(BaseModel):
-    success: bool
-    routes: list = None
-    error: str = None
-    map_file: str = None
-    charging_stations_count: int = 0
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
 
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
 
-@app.get("/")
-async def root():
-    """Home Page"""
-    html_content = """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sri Lanka EV Route Planner</title>
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
 
-            body {
-                font-family: 'Arial', sans-serif;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                min-height: 100vh;
-                padding: 20px;
-            }
+        .content {
+            padding: 25px;
+        }
 
-            .container {
-                max-width: 800px;
-                margin: 0 auto;
-                background: white;
-                border-radius: 15px;
-                box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-                overflow: hidden;
-            }
+        .form-group {
+            margin-bottom: 20px;
+        }
 
-            .header {
-                background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-                color: white;
-                padding: 25px;
-                text-align: center;
-            }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
 
-            .header h1 {
-                font-size: 2.2em;
-                margin-bottom: 10px;
-            }
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
 
-            .content {
-                padding: 25px;
-            }
+        select:focus {
+            border-color: #3498db;
+            outline: none;
+        }
 
-            .form-group {
-                margin-bottom: 20px;
-            }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
 
-            label {
-                display: block;
-                margin-bottom: 8px;
-                font-weight: bold;
-                color: #2c3e50;
-            }
+        button:hover {
+            background: #c0392b;
+        }
 
-            select {
-                width: 100%;
-                padding: 12px;
-                border: 2px solid #ddd;
-                border-radius: 8px;
-                font-size: 16px;
-            }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
 
-            select:focus {
-                border-color: #3498db;
-                outline: none;
-            }
+        .success {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+        }
 
-            button {
-                width: 100%;
-                padding: 15px;
-                background: #e74c3c;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: 1.1em;
-                font-weight: bold;
-                cursor: pointer;
-                transition: background 0.3s;
-            }
+        .error {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            color: #721c24;
+        }
 
-            button:hover {
-                background: #c0392b;
-            }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
 
-            .result {
-                margin-top: 20px;
-                padding: 20px;
-                border-radius: 10px;
-                display: none;
-            }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
 
-            .success {
-                background: #d4edda;
-                border: 2px solid #c3e6cb;
-                color: #155724;
-            }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-            .error {
-                background: #f8d7da;
-                border: 2px solid #f5c6cb;
-                color: #721c24;
-            }
+        .route-info {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
 
-            .loading {
-                text-align: center;
-                padding: 20px;
-                display: none;
-            }
+        .map-button {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
 
-            .spinner {
-                border: 4px solid #f3f3f3;
-                border-top: 4px solid #3498db;
-                border-radius: 50%;
-                width: 40px;
-                height: 40px;
-                animation: spin 1s linear infinite;
-                margin: 0 auto 15px;
-            }
+        .map-button:hover {
+            background: #2980b9;
+        }
 
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
+        .legend {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
 
-            .route-info {
-                background: white;
-                padding: 15px;
-                border-radius: 8px;
-                margin: 10px 0;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
 
-            .map-button {
-                display: inline-block;
-                background: #3498db;
-                color: white;
-                padding: 10px 20px;
-                text-decoration: none;
-                border-radius: 6px;
-                font-weight: bold;
-                margin: 10px 5px;
-                transition: background 0.3s;
-            }
-
-            .map-button:hover {
-                background: #2980b9;
-            }
-
-            .legend {
-                background: #f8f9fa;
-                padding: 15px;
-                border-radius: 8px;
-                margin: 15px 0;
-            }
-
-            .legend-item {
-                display: flex;
-                align-items: center;
-                margin: 5px 0;
-            }
-
-            .legend-color {
-                width: 20px;
-                height: 20px;
-                border-radius: 50%;
-                margin-right: 10px;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>Sri Lanka EV Route Planner</h1>
-                <p>Find routes with charging stations</p>
-            </div>
-
-            <div class="content">
-                <form id="routeForm">
-                    <div class="form-group">
-                        <label for="start">Start Location:</label>
-                        <select id="start" required>
-                            <option value="">Select start city...</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="end">Destination:</label>
-                        <select id="end" required>
-                            <option value="">Select destination...</option>
-                        </select>
-                    </div>
-
-                    <div class="legend">
-                        <h4>Map Legend:</h4>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: green;"></div>
-                            <span>Start Location</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: red;"></div>
-                            <span>Destination</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: orange;"></div>
-                            <span>Charging Stations on Route</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: blue;"></div>
-                            <span>Other Charging Stations</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #3498db;"></div>
-                            <span>Route 1 (Shortest)</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #e74c3c;"></div>
-                            <span>Route 2</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #2ecc71;"></div>
-                            <span>Route 3</span>
-                        </div>
-                    </div>
-
-                    <button type="submit">Find Routes</button>
-                </form>
-
-                <div class="loading" id="loading">
-                    <div class="spinner"></div>
-                    <div>Finding routes...</div>
-                </div>
-
-                <div id="result" class="result"></div>
-            </div>
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Sri Lanka EV Route Planner</h1>
+            <p>Find routes with charging stations</p>
         </div>
 
-        <script>
-            // City list
-            const cities = [
-                'Colombo', 'Kandy', 'Galle', 'Jaffna', 'Anuradhapura',
-                'Matara', 'Negombo', 'Kurunegala', 'Ratnapura',
-                'Badulla', 'Nuwara Eliya', 'Trincomalee', 'Batticaloa',
-                'Puttalam', 'Kalutara', 'Gampaha', 'Kegalle', 'Polonnaruwa',
-                'Hambantota', 'Ampara', 'Monaragala', 'Vavuniya', 
-                'Mannar', 'Kilinochchi', 'Mullaitivu'
-            ];
+        <div class="content">
+            <form id="routeForm">
+                <div class="form-group">
+                    <label for="start">Start Location:</label>
+                    <select id="start" required>
+                        <option value="">Select start city...</option>
+                    </select>
+                </div>
 
-            // Populate Dropdowns
-            function populateCities() {
-                const startSelect = document.getElementById('start');
-                const endSelect = document.getElementById('end');
+                <div class="form-group">
+                    <label for="end">Destination:</label>
+                    <select id="end" required>
+                        <option value="">Select destination...</option>
+                    </select>
+                </div>
 
-                cities.forEach(city => {
-                    startSelect.innerHTML += `<option value="${city}">${city}</option>`;
-                    endSelect.innerHTML += `<option value="${city}">${city}</option>`;
+                <div class="legend">
+                    <h4>Map Legend:</h4>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: green;"></div>
+                        <span>Start Location</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: red;"></div>
+                        <span>Destination</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: orange;"></div>
+                        <span>Charging Stations on Route</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: blue;"></div>
+                        <span>Other Charging Stations</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3498db;"></div>
+                        <span>Route 1 (Shortest)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e74c3c;"></div>
+                        <span>Route 2</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #2ecc71;"></div>
+                        <span>Route 3</span>
+                    </div>
+                </div>
+
+                <button type="submit">Find Routes</button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div>Finding routes...</div>
+            </div>
+
+            <div id="result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // City list
+        const cities = [
+            'Colombo', 'Kandy', 'Galle', 'Jaffna', 'Anuradhapura', 'Matara', 'Trincomalee', 
+            'Negombo', 'Kurunegala', 'Ratnapura', 'Badulla', 'Nuwara Eliya', 'Batticaloa', 
+            'Puttalam', 'Kalutara', 'Gampaha', 'Kegalle', 'Polonnaruwa', 'Hambantota', 
+            'Ampara', 'Monaragala', 'Vavuniya', 'Mannar', 'Kilinochchi', 'Mullaitivu',
+            'Moratuwa', 'Sri Jayawardenepura Kotte', 'Dehiwala-Mount Lavinia', 'Kotahena', 
+            'Bambalapitiya', 'Nugegoda', 'Maharagama', 'Kottawa', 'Homagama', 'Panadura', 
+            'Horana', 'Kalmunai', 'Beruwala', 'Chilaw', 'Eravur', 'Hatton', 'Wattegama', 
+            'Mawanella', 'Bandarawela', 'Kadugannawa', 'Dambulla', 'Tangalle', 'Weligama', 
+            'Ambalangoda', 'Balangoda', 'Embilipitiya', 'Tissamaharama', 'Haputale', 
+            'Wellawaya', 'Nikaweratiya', 'Kuliyapitiya', 'Narammala', 'Wariyapola', 
+            'Aluthgama', 'Bentota', 'Hikkaduwa', 'Dickwella', 'Hali-Ela', 'Passara', 
+            'Welimada', 'Maskeliya', 'Nawalapitiya', 'Gampola', 'Peradeniya', 'Kaduruwela', 
+            'Valaichchenai', 'Eheliyagoda', 'Kuruwita', 'Pelmadulla', 'Rakwana', 
+            'Godakawela', 'Kalawana', 'Elpitiya', 'Ambalantota', 'Beliatta', 'Hakmana', 
+            'Akuressa', 'Matale', 'Dikoya', 'Hatton-Dickoya', 'Nattandiya', 'Minuwangoda', 
+            'Divulapitiya', 'Mirigama', 'Veyangoda', 'Giriulla', 'Pannala', 'Ragama', 
+            'Wattala', 'Kelaniya', 'Kadawatha', 'Ja-Ela', 'Seeduwa', 'Katunayake', 
+            'Kochchikade', 'Pothuhera', 'Galewela', 'Pallegama', 'Rambukkana', 
+            'Melsiripura', 'Kebithigollawa', 'Medawachchiya', 'Mihintale', 'Thambuttegama', 
+            'Kekirawa', 'Maradankadawala', 'Galenbindunuwewa', 'Horowpathana', 
+            'Kahatagasdigiliya', 'Nochchiyagama', 'Talawa', 'Point Pedro', 'Chavakachcheri', 
+            'Nallur', 'Karainagar', 'Velanai', 'Kayts', 'Delft', 'Manipay', 'Uduvil', 
+            'Kopay', 'Tellippalai', 'Mulliyawalai', 'Oddusuddan', 'Puthukudiyiruppu', 
+            'Vishwamadu', 'Karaitivu', 'Akkaraipattu', 'Sainthamaruthu', 'Nintavur', 
+            'Addalaichenai', 'Pottuvil', 'Uhana', 'Mahiyanganaya', 'Girandurukotte', 
+            'Dehiattakandiya', 'Kadapathgama', 'Buttala', 'Kataragama', 'Katharagama', 
+            'Kithulampitiya', 'Bibile', 'Medagama', 'Siyambalanduwa', 'Lunugamvehera', 
+            'Thanamalwila', 'Kuda Oya', 'Wellawaya', 'Sooriyawewa', 'Hambantota Town'
+        ];
+
+        // Populate Dropdowns
+        function populateCities() {
+            const startSelect = document.getElementById('start');
+            const endSelect = document.getElementById('end');
+
+            cities.forEach(city => {
+                startSelect.innerHTML += `<option value="${city}">${city}</option>`;
+                endSelect.innerHTML += `<option value="${city}">${city}</option>`;
+            });
+        }
+
+        // Form submission
+        document.getElementById('routeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const start = document.getElementById('start').value;
+            const end = document.getElementById('end').value;
+
+            const resultDiv = document.getElementById('result');
+            const loadingDiv = document.getElementById('loading');
+
+            // Show loading display
+            loadingDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/route', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        start: start,
+                        end: end
+                    })
                 });
-            }
 
-            // Form submission
-            document.getElementById('routeForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
+                const data = await response.json();
+                loadingDiv.style.display = 'none';
+                resultDiv.style.display = 'block';
 
-                const start = document.getElementById('start').value;
-                const end = document.getElementById('end').value;
-
-                const resultDiv = document.getElementById('result');
-                const loadingDiv = document.getElementById('loading');
-
-                // Show loading display
-                loadingDiv.style.display = 'block';
-                resultDiv.style.display = 'none';
-                resultDiv.className = 'result';
-                resultDiv.innerHTML = '';
-
-                try {
-                    const response = await fetch('/api/route', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            start: start,
-                            end: end
-                        })
-                    });
-
-                    const data = await response.json();
-                    loadingDiv.style.display = 'none';
-                    resultDiv.style.display = 'block';
-
-                    if (data.success) {
-                        resultDiv.className = 'result success';
-                        displayRouteResults(data, resultDiv);
-                    } else {
-                        resultDiv.className = 'result error';
-                        resultDiv.innerHTML = `
-                            <h3>Error</h3>
-                            <p>${data.error}</p>
-                        `;
-                    }
-                } catch (error) {
-                    loadingDiv.style.display = 'none';
-                    resultDiv.style.display = 'block';
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    displayRouteResults(data, resultDiv);
+                } else {
                     resultDiv.className = 'result error';
                     resultDiv.innerHTML = `
-                        <h3>Connection Error</h3>
-                        <p>Service is unreachable. Please check your internet connection.</p>
+                        <h3>Error</h3>
+                        <p>${data.error}</p>
                     `;
                 }
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>Connection Error</h3>
+                    <p>Service is unreachable. Please check your internet connection.</p>
+                `;
+            }
+        });
+
+        // Display route results
+        function displayRouteResults(data, resultDiv) {
+            let html = `<h3>Routes Found!</h3>`;
+
+            // Route information
+            html += `<div class="route-info">`;
+            html += `<h4>Route Summary</h4>`;
+            html += `<p><strong>From:</strong> ${data.start_city}</p>`;
+            html += `<p><strong>To:</strong> ${data.end_city}</p>`;
+            html += `<p><strong>Total Charging Stations:</strong> ${data.charging_stations_count}</p>`;
+            html += `</div>`;
+
+            // Routes list
+            html += `<div class="route-info">`;
+            html += `<h4>Route Alternatives</h4>`;
+
+            data.routes.forEach((route, index) => {
+                const colors = ['#3498db', '#e74c3c', '#2ecc71'];
+                const routeNumber = index + 1;
+                const isShortest = index === 0;
+
+                html += `
+                    <div style="border-left: 4px solid ${colors[index]}; padding-left: 15px; margin: 10px 0;">
+                        <h5>Route ${routeNumber} ${isShortest ? '(Shortest)' : ''}</h5>
+                        <p><strong>Distance:</strong> ${route.distance.toFixed(1)} km</p>
+                        <p><strong>Duration:</strong> ${route.duration.toFixed(0)} minutes</p>
+                    </div>
+                `;
             });
+            html += `</div>`;
 
-            // Display route results
-            function displayRouteResults(data, resultDiv) {
-                let html = `<h3>Routes Found!</h3>`;
-
-                // Route information
+            // Charging stations
+            if (data.charging_stations && data.charging_stations.length > 0) {
                 html += `<div class="route-info">`;
-                html += `<h4>Route Summary</h4>`;
-                html += `<p><strong>From:</strong> ${data.start_city}</p>`;
-                html += `<p><strong>To:</strong> ${data.end_city}</p>`;
-                html += `<p><strong>Total Charging Stations:</strong> ${data.charging_stations_count}</p>`;
-                html += `</div>`;
+                html += `<h4>Charging Stations on Route</h4>`;
 
-                // Routes list
-                html += `<div class="route-info">`;
-                html += `<h4>Route Alternatives</h4>`;
-
-                data.routes.forEach((route, index) => {
-                    const colors = ['#3498db', '#e74c3c', '#2ecc71'];
-                    const routeNumber = index + 1;
-                    const isShortest = index === 0;
-
+                data.charging_stations.forEach(station => {
                     html += `
-                        <div style="border-left: 4px solid ${colors[index]}; padding-left: 15px; margin: 10px 0;">
-                            <h5>Route ${routeNumber} ${isShortest ? '(Shortest)' : ''}</h5>
-                            <p><strong>Distance:</strong> ${route.distance.toFixed(1)} km</p>
-                            <p><strong>Duration:</strong> ${route.duration.toFixed(0)} minutes</p>
+                        <div style="margin: 8px 0; padding: 8px; background: #fff3cd; border-radius: 5px;">
+                            <strong>${station.name}</strong><br>
+                            <small>Type: ${station.type} | Power: ${station.power}</small><br>
+                            <small>Distance from route: ${station.distance_to_route} km</small>
                         </div>
                     `;
                 });
                 html += `</div>`;
-
-                // Charging stations
-                if (data.charging_stations && data.charging_stations.length > 0) {
-                    html += `<div class="route-info">`;
-                    html += `<h4>Charging Stations on Route</h4>`;
-
-                    data.charging_stations.forEach(station => {
-                        html += `
-                            <div style="margin: 8px 0; padding: 8px; background: #fff3cd; border-radius: 5px;">
-                                <strong>${station.name}</strong><br>
-                                <small>Type: ${station.type} | Power: ${station.power}</small><br>
-                                <small>Distance from route: ${station.distance_to_route} km</small>
-                            </div>
-                        `;
-                    });
-                    html += `</div>`;
-                }
-
-                // Map button
-                if (data.map_file) {
-                    html += `
-                        <div style="text-align: center; margin-top: 20px;">
-                            <a href="/map/${data.map_file}" target="_blank" class="map-button">
-                                View Map
-                            </a>
-                            <a href="/api/download/${data.map_file}" class="map-button" style="background: #27ae60;">
-                                Download Map
-                            </a>
-                        </div>
-                    `;
-                }
-
-                resultDiv.innerHTML = html;
             }
 
-            // Initialize when the page loads
-            document.addEventListener('DOMContentLoaded', function() {
-                populateCities();
-            });
-        </script>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content)
+            // Map button
+            if (data.map_file) {
+                html += `
+                    <div style="text-align: center; margin-top: 20px;">
+                        <a href="/map/${data.map_file}" target="_blank" class="map-button">
+                            View Map
+                        </a>
+                        <a href="/api/download/${data.map_file}" class="map-button" style="background: #27ae60;">
+                            Download Map
+                        </a>
+                    </div>
+                `;
+            }
+
+            resultDiv.innerHTML = html;
+        }
+
+        // Initialize when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            populateCities();
+        });
+    </script>
+</body>
+</html>
+"""
 
 
-@app.post("/api/route")
-async def calculate_route(request: RouteRequest):
+@app.route('/')
+def root():
+    """Home Page"""
+    return HTML_TEMPLATE
+
+
+@app.route('/api/route', methods=['POST'])
+def calculate_route():
     """Calculate routes between two cities"""
     try:
-        print(f"Finding routes: {request.start} → {request.end}")
+        data = request.get_json()
+        start = data.get('start')
+        end = data.get('end')
+
+        print(f"Finding routes: {start} → {end}")
 
         # Get routes
         routes_data = planner.get_route_from_osrm(
-            planner.cities[request.start],
-            planner.cities[request.end],
+            planner.cities[start],
+            planner.cities[end],
             3
         )
 
         if not routes_data:
-            return {
+            return jsonify({
                 "success": False,
                 "error": "No routes found between these cities. Please try different cities."
-            }
+            })
 
         # Find charging stations for the shortest route
         shortest_route_coords = routes_data[0]['coordinates']
         charging_stations = planner.find_charging_stations_near_route(shortest_route_coords)
 
         # Create map
-        map_file = planner.create_route_with_charging_map(request.start, request.end)
+        map_file = planner.create_route_with_charging_map(start, end)
 
         # Count total stations
         total_stations = sum(len(stations) for stations in planner.charging_stations.values())
 
-        return {
+        return jsonify({
             "success": True,
             "routes": routes_data,
             "map_file": map_file,
             "charging_stations_count": len(charging_stations),
-            "total_stations_count": total_stations,  # Add total count
-            "start_city": request.start,
-            "end_city": request.end,
+            "total_stations_count": total_stations,
+            "start_city": start,
+            "end_city": end,
             "charging_stations": charging_stations
-        }
+        })
 
     except Exception as e:
         print(f"Route Error: {e}")
-        return {
+        return jsonify({
             "success": False,
             "error": f"Route calculation error: {str(e)}"
-        }
+        })
 
-@app.get("/map/{filename}")
-async def get_map_file(filename: str):
+
+@app.route('/map/<filename>')
+def get_map_file(filename):
     """Serves the map files"""
     filepath = f"maps/{filename}"
     if os.path.exists(filepath):
-        return FileResponse(filepath)
-    raise HTTPException(status_code=404, detail="Map file not found")
+        return send_file(filepath)
+    return jsonify({"error": "Map file not found"}), 404
 
 
-@app.get("/api/download/{filename}")
-async def download_map(filename: str):
+@app.route('/api/download/<filename>')
+def download_map(filename):
     """Downloads the map"""
     filepath = f"maps/{filename}"
     if os.path.exists(filepath):
-        return FileResponse(
+        return send_file(
             filepath,
-            media_type='text/html',
-            filename=f"EV_ROUTE_{filename}"
+            as_attachment=True,
+            download_name=f"EV_ROUTE_{filename}"
         )
-    raise HTTPException(status_code=404, detail="Map file not found")
+    return jsonify({"error": "Map file not found"}), 404
 
 
-@app.get("/api/charging-stations")
-async def get_all_charging_stations():
+@app.route('/api/charging-stations')
+def get_all_charging_stations():
     """Get all charging stations"""
     try:
         all_stations = []
         for city_stations in planner.charging_stations.values():
             all_stations.extend(city_stations)
 
-        return {
+        return jsonify({
             "success": True,
             "total_stations": len(all_stations),
             "stations": all_stations
-        }
+        })
     except Exception as e:
-        return {
+        return jsonify({
             "success": False,
             "error": str(e)
-        }
+        })
 
 
-@app.get("/health")
-async def health_check():
-    return {
+@app.route('/health')
+def health_check():
+    return jsonify({
         "status": "healthy",
         "service": "EV Route Planner",
         "timestamp": datetime.now().isoformat(),
         "charging_stations": sum(len(stations) for stations in planner.charging_stations.values()),
         "cities": len(planner.cities)
-    }
+    })
+
+
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    """Serve static files"""
+    return send_from_directory('static', filename)
 
 
 if __name__ == "__main__":
-    print("🚗 Sri Lanka EV Route Planner")
-    print("🌐 Web Interface: http://localhost:8000/")
-    print(f"⚡ Charging Stations: {sum(len(stations) for stations in planner.charging_stations.values())}")
-    print("🏙️ Cities: 25 major cities")
+    print(" Sri Lanka EV Route Planner (Flask)")
+    print(" Web Interface: http://localhost:8000/")
+    print(f" Charging Stations: {sum(len(stations) for stations in planner.charging_stations.values())}")
+    print(" Cities: 25 major cities")
 
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    app.run(host="127.0.0.1", port=8000, debug=True)
