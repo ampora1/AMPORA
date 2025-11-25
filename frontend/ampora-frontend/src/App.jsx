@@ -9,6 +9,7 @@ import BookingsPage from "./pages/BookingsPage.jsx";
 import PaymentPage from "./pages/PaymentPage.jsx";
 import UserDashboard from "./pages/UserDashboard.jsx";
 import UserProfile from "./pages/UserProfile.jsx";
+import VehicleManager from "./pages/VehicleManager.jsx";
 
 // Layout wrapper that hides navbar on certain pages
 function AppLayout() {
@@ -32,6 +33,7 @@ function AppLayout() {
         <Route path="/payments" element={<PaymentPage />} />
         <Route path="/user-dashboard" element={<UserDashboard />} />
         <Route path="/profile" element={<UserProfile />} />
+        <Route path="/vehicles" element={<VehicleManager />} />
       </Routes>
     </>
   );
