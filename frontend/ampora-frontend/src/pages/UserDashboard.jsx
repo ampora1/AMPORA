@@ -1,119 +1,250 @@
+// src/pages/UserDashboard.jsx
 import React from "react";
-import { FaCar, FaMapMarkedAlt, FaBatteryHalf, FaChargingStation } from "react-icons/fa";
-import { MdPayments } from "react-icons/md";
+import { motion } from "framer-motion";
+
+import {
+  FiUser,
+  FiCalendar,
+  FiZap,
+  FiCreditCard,
+  FiLogOut,
+  FiMapPin,
+  FiClock
+} from "react-icons/fi";
+
+import { MdEvStation } from "react-icons/md";
+import { TbBatteryCharging } from "react-icons/tb";
+import { LuCar } from "react-icons/lu";   // ✅ FIX: Replace FiCar
+
+const glass =
+  "backdrop-blur-xl bg-white/70 border border-emerald-200/60 shadow-[0_8px_35px_rgba(16,185,129,0.12)]";
 
 const UserDashboard = () => {
+  // ------- Mock data (replace with API data) -------
+  const user = {
+    name: "Hi, Sangeeth ",
+  };
+
+  const monthly = {
+    spentLKR: 18450.75,
+    kwh: 212.4,
+  };
+
+  const upcomingBooking = {
+    station: "Ampora SuperCharge – Borella",
+    address: "No.45 Kandy Rd, Kiribathgoda",
+    date: "2025-11-22",
+    time: "11:00 AM",
+    charger: "CCS • 100 kW",
+    status: "Confirmed",
+    price: "LKR 3,150",
+  };
+
+  const vehicle = {
+    brand: "Nissan",
+    model: "Leaf",
+    variant: "40 kWh",
+    plate: "WP-CAD-4123",
+    rangeKm: 240,
+    connector: "CHAdeMO",
+  };
+
+  // ------- Quick actions -------
+  const quickActions = [
+    { title: "User Details", icon: <FiUser />, to: "/profile" },
+    { title: "Vehicle Details", icon: <LuCar />, to: "/vehicles" }, // ✅ FIXED
+    { title: "Bookings", icon: <FiCalendar />, to: "/bookings" },
+    { title: "View Plans & Subscription", icon: <FiCreditCard />, to: "/payments" },
+    { title: "Charging History", icon: <FiZap />, to: "/history" },
+    { title: "Logout", icon: <FiLogOut />, to: "/logout" },
+  ];
+
+  const pill =
+    "inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold";
+
   return (
-    <div className="w-screen min-h-screen bg-[#EDFFFF] flex flex-col items-center py-10">
-
-      {/* HEADER */}
-      <div className="w-11/12 bg-emerald-500 rounded-3xl h-[180px] text-white p-8 flex justify-between items-center shadow-lg">
-        <div>
-          <h1 className="text-4xl font-bold">Welcome Back, Sangeeth 👋</h1>
-          <p className="text-lg opacity-90 mt-2">Manage your EV journey with ease</p>
-        </div>
-
-        <div className="bg-white bg-opacity-20 px-6 py-3 rounded-2xl backdrop-blur-md">
-          <p className="text-lg font-medium">Current Battery</p>
-          <p className="text-3xl font-bold">78%</p>
-        </div>
-      </div>
-
-      {/* QUICK ACTIONS */}
-      <div className="w-11/12 grid grid-cols-1 sm:grid-cols-3 gap-6 mt-10">
-        <div className="bg-white p-6 rounded-3xl shadow-xl hover:scale-105 transition-all cursor-pointer">
-          <FaMapMarkedAlt size={40} className="text-emerald-500" />
-          <h3 className="text-xl font-bold mt-4">Plan Your Trip</h3>
-          <p className="text-gray-600 mt-2">Get optimized routes & charging stops</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl shadow-xl hover:scale-105 transition-all cursor-pointer">
-          <FaChargingStation size={40} className="text-emerald-500" />
-          <h3 className="text-xl font-bold mt-4">Find Stations</h3>
-          <p className="text-gray-600 mt-2">Search nearby charging stations</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl shadow-xl hover:scale-105 transition-all cursor-pointer">
-          <MdPayments size={40} className="text-emerald-500" />
-          <h3 className="text-xl font-bold mt-4">Payments</h3>
-          <p className="text-gray-600 mt-2">View plans & manage subscription</p>
+    <div className="w-screen min-h-screen bg-gradient-to-b from-emerald-50 via-teal-50 to-white text-gray-900">
+      {/* Header */}
+      <div className="mx-auto w-11/12 max-w-7xl py-8">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-emerald-700">
+              {user.name}
+            </h1>
+            <p className="text-emerald-900/70">
+              Your EV journey at a glance—actions, usage, bookings & vehicle.
+            </p>
+          </div>
+          <div className={`${glass} rounded-2xl px-4 py-2`}>
+            <span className="text-sm text-emerald-900/80">
+              Plan a trip faster from here →
+            </span>
+            <a
+              href="/trip"
+              className="ml-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-500 px-3 py-1 rounded-lg"
+            >
+             <span className="text-white">Open Trip Planner</span> 
+            </a>
+          </div>
         </div>
       </div>
 
-      {/* MAIN CONTENT: 2 COLUMNS */}
-      <div className="w-11/12 grid grid-cols-1 lg:grid-cols-3 gap-6 mt-10">
-
-        {/* LEFT COLUMN */}
-        <div className="col-span-2 flex flex-col gap-6">
-
-          {/* ACTIVE BOOKING */}
-          <div className="bg-white p-6 rounded-3xl shadow-xl">
-            <h2 className="text-2xl font-bold text-emerald-600">Active Booking</h2>
-            <div className="mt-4">
-              <p className="font-semibold text-xl">GreenCharge Downtown</p>
-              <p className="text-gray-600">Slot: 2:30 PM – 3:00 PM</p>
-              <div className="w-full bg-gray-200 h-2 rounded-lg mt-4">
-                <div className="w-1/2 bg-emerald-500 h-2 rounded-lg"></div>
+      <div className="mx-auto w-11/12 max-w-7xl pb-12 space-y-8">
+        {/* Row 1: Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4"
+        >
+          {quickActions.map((a, idx) => (
+            <a
+              key={idx}
+              href={a.to}
+              className={`${glass} rounded-2xl p-4 hover:shadow-xl transition group`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="grid place-items-center w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 text-lg group-hover:scale-105 transition">
+                  {a.icon}
+                </div>
+                <div className="font-semibold text-sm text-emerald-900">
+                  {a.title}
+                </div>
               </div>
-              <button className="mt-5 bg-emerald-500 text-white px-4 py-2 rounded-xl hover:bg-emerald-600">
-                View Booking
+            </a>
+          ))}
+        </motion.div>
+
+        {/* Row 2: Monthly Usage + Upcoming Booking */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Monthly usage cards (span 2 on large) */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:col-span-2"
+          >
+            <div className={`${glass} rounded-2xl p-6`}>
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-emerald-900/80">Spent this month</h3>
+                <FiCreditCard className="text-emerald-600" />
+              </div>
+              <p className="mt-2 text-3xl font-extrabold text-emerald-700">
+                LKR {monthly.spentLKR.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </p>
+              <p className="text-xs text-emerald-900/70 mt-1">Billing cycle: 1 → 30</p>
+            </div>
+
+            <div className={`${glass} rounded-2xl p-6`}>
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-emerald-900/80">Energy used</h3>
+                <TbBatteryCharging className="text-emerald-600" />
+              </div>
+              <p className="mt-2 text-3xl font-extrabold text-emerald-700">
+                {monthly.kwh.toFixed(1)} kWh
+              </p>
+              <p className="text-xs text-emerald-900/70 mt-1">Estimated grid + fast DC mix</p>
+            </div>
+          </motion.div>
+
+          {/* Upcoming booking */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`${glass} rounded-2xl p-6`}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-emerald-900">Upcoming booking</h3>
+              <span className={`${pill} bg-emerald-100 text-emerald-700`}>
+                {upcomingBooking.status}
+              </span>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <MdEvStation className="text-emerald-600" />
+                <p className="font-semibold text-emerald-800">
+                  {upcomingBooking.station}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-emerald-900/80">
+                <FiMapPin /> {upcomingBooking.address}
+              </div>
+              <div className="flex items-center gap-4 text-sm text-emerald-900/80">
+                <span className="inline-flex items-center gap-2">
+                  <FiClock /> {upcomingBooking.date} • {upcomingBooking.time}
+                </span>
+                <span>• {upcomingBooking.charger}</span>
+              </div>
+              <div className="pt-2 text-sm">
+                Est. Cost: <span className="font-semibold">{upcomingBooking.price}</span>
+              </div>
+            </div>
+
+            <div className="mt-5 flex gap-3">
+              <a
+                href="/bookings"
+                className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700"
+              >
+                <span className="text-white">View Details</span>
+              </a>
+              <button className="px-4 py-2 rounded-lg border border-emerald-300 text-white text-sm hover:bg-emerald-50">
+                Reschedule
               </button>
             </div>
-          </div>
-
-          {/* TRIP HISTORY */}
-          <div className="bg-white p-6 rounded-3xl shadow-xl">
-            <h2 className="text-2xl font-bold text-emerald-600">Charging History</h2>
-            <div className="mt-4 space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex justify-between border-b pb-3">
-                  <div>
-                    <p className="font-bold">Ampora Station {i}</p>
-                    <p className="text-gray-500 text-sm">Colombo</p>
-                  </div>
-                  <p className="text-emerald-600 font-bold">18.2 kWh</p>
-                </div>
-              ))}
-            </div>
-          </div>
+          </motion.div>
         </div>
 
-        {/* RIGHT COLUMN */}
-        <div className="flex flex-col gap-6">
+        {/* Row 3: Selected Vehicle */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`${glass} rounded-2xl p-6`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h3 className="font-semibold text-emerald-900">Selected vehicle</h3>
+              <p className="text-emerald-900/70 text-sm">
+                From your vehicle list •{" "}
+                <a href="/vehicles" className="underline decoration-emerald-400">
+                  change vehicle
+                </a>
+              </p>
+            </div>
 
-          {/* VEHICLE INFO */}
-          <div className="bg-white p-6 rounded-3xl shadow-xl">
-            <h2 className="text-2xl font-bold text-emerald-600 mb-4">My Vehicle</h2>
-            <div className="flex items-center gap-4">
-              <FaCar size={50} className="text-emerald-500" />
-              <div>
-                <p className="text-xl font-semibold">Tesla Model 3</p>
-                <p className="text-gray-600">Battery: 72 kWh</p>
-                <p className="text-gray-600">Range: 420 km</p>
-              </div>
+            <div className="flex flex-wrap items-center gap-4">
+              <span className={`${pill} bg-emerald-100 text-emerald-700`}>
+                {vehicle.brand} {vehicle.model} • {vehicle.variant}
+              </span>
+              <span className={`${pill} bg-teal-100 text-teal-700`}>
+                Range ~ {vehicle.rangeKm} km
+              </span>
+              <span className={`${pill} bg-emerald-50 text-emerald-700 border border-emerald-200`}>
+                Connector: {vehicle.connector}
+              </span>
+              <span className={`${pill} bg-gray-100 text-gray-700`}>
+                Plate: {vehicle.plate}
+              </span>
             </div>
           </div>
 
-          {/* UPCOMING TRIPS */}
-          <div className="bg-white p-6 rounded-3xl shadow-xl">
-            <h2 className="text-2xl font-bold text-emerald-600 mb-4">Upcoming Trips</h2>
+          {/* cute little line */}
+          <div className="mt-5 h-px bg-gradient-to-r from-transparent via-emerald-300 to-transparent" />
 
-            {[1, 2].map((i) => (
-              <div
-                key={i}
-                className="border rounded-xl p-4 mb-3 hover:border-emerald-400 transition"
-              >
-                <p className="font-semibold">Trip #{i}</p>
-                <p className="text-gray-600 text-sm">Colombo → Kandy</p>
-                <p className="text-gray-600 text-sm">Tomorrow • 9:00 AM</p>
-              </div>
-            ))}
+          <div className="mt-5 flex flex-wrap gap-3">
+            <a
+              href="/trip"
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold shadow hover:shadow-lg"
+            >
+              <span className="text-white">Plan with this vehicle</span>
+            </a>
+            <button className="px-4 py-2 rounded-lg border border-emerald-300 text-white text-sm hover:bg-emerald-50">
+              Manage vehicles
+            </button>
           </div>
-
-        </div>
+        </motion.div>
       </div>
     </div>
   );
 };
 
 export default UserDashboard;
+

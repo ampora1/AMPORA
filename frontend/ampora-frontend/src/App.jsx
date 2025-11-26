@@ -8,8 +8,20 @@ import StationFinder from "./pages/StationFinder.jsx";
 import BookingsPage from "./pages/BookingsPage.jsx";
 import PaymentPage from "./pages/PaymentPage.jsx";
 import UserDashboard from "./pages/UserDashboard.jsx";
+
+import UserProfile from "./pages/UserProfile.jsx";
+import VehicleManager from "./pages/VehicleManager.jsx";
+import StationDetails from "./pages/StationDetails.jsx";
+import Notifications from "./pages/Notifications.jsx";
+import Settings from "./pages/Settings.jsx";
+import HelpSupport from "./pages/HelpSupport.jsx";
+import SubscriptionPlans from "./pages/SubscriptionPlans.jsx";
+import ChargingHistory from "./pages/ChargingHistory.jsx";
+import Footer from "./components/Footer.jsx";
+
 import Register from "./pages/Register.jsx";
 import Forget from "./pages/Forget.jsx";
+
 
 
 // Layout wrapper that hides navbar on certain pages
@@ -35,6 +47,14 @@ function AppLayout() {
         <Route path="/bookings" element={<BookingsPage />} />
         <Route path="/payments" element={<PaymentPage />} />
         <Route path="/user-dashboard" element={<UserDashboard />} />
+        <Route path="/profile" element={<UserProfile />} />
+        <Route path="/vehicles" element={<VehicleManager />} />
+        <Route path="/history" element={<ChargingHistory />} />
+        <Route path="/plans" element={<SubscriptionPlans />} />
+<Route path="/station/:id" element={<StationDetails />} />
+<Route path="/notifications" element={<Notifications />} />
+<Route path="/settings" element={<Settings />} />
+<Route path="/help" element={<HelpSupport />} />
       </Routes>
     </>
   );
@@ -44,6 +64,7 @@ export default function App() {
   return (
     <Router>
       <AppLayout />
+      <Footer/>
     </Router>
   );
 }

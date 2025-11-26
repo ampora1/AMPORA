@@ -82,10 +82,10 @@ const Home = () => {
         ))}
       </motion.div>
 
-<EVSimulator />
+
 
       {/* ============== BOTTOM INFO SECTIONS ============== */}
-      <div className="flex flex-col lg:flex-row justify-center mt-20 gap-8 px-16">
+      <div className="flex flex-col lg:flex-row justify-center mt-20 gap-8 px-16 my-5">
 
         {/* LEFT */}
         <motion.div

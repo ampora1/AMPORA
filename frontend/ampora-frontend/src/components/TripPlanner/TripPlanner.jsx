@@ -45,20 +45,43 @@ const TripPlanner = () => {
     <div className="w-screen min-h-screen bg-gradient-to-b from-emerald-50 via-teal-50 to-white text-gray-900 overflow-hidden">
 
       {/* HERO */}
-      <div
-        className="relative w-full h-[40vh] flex items-center justify-center text-center bg-cover bg-center"
-        style={{
-          backgroundImage: `url(${herobg})`,
-        }}
-      >
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/50"></div>
+      {/* HERO SECTION */}
+<div
+  className="relative w-full h-[45vh] md:h-[55vh] bg-center bg-cover flex items-center justify-center"
+  style={{ backgroundImage: `url(${herobg})` }}
+>
+  {/* Dark overlay */}
+  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
-        {/* Text */}
-        {/* <h1 className="relative text-4xl md:text-6xl font-extrabold text-white drop-shadow-xl px-4">
-          Plan Your Electric Journey
-        </h1> */}
-      </div>
+  {/* CONTENT */}
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.8 }}
+    className="relative z-10 text-center px-4"
+  >
+    <h1 className="text-4xl md:text-6xl font-extrabold text-white drop-shadow-2xl tracking-tight">
+      Plan Your Electric Journey
+    </h1>
+
+    {/* Animated Charging Line */}
+    <motion.div
+      initial={{ width: 0 }}
+      animate={{ width: "140px" }}
+      transition={{ duration: 1.2, ease: "easeInOut" }}
+      className="h-[3px] bg-gradient-to-r from-white via-emerald-300 to-white mx-auto mt-4 rounded-full shadow-xl"
+    ></motion.div>
+
+    <p className="mt-4 text-white/80 text-sm md:text-lg max-w-xl mx-auto">
+      Smart routing • Real-time charging • Energy-aware navigation ⚡
+    </p>
+  </motion.div>
+
+  {/* Soft glowing blobs */}
+  <div className="absolute -top-10 -left-10 w-40 h-40 bg-emerald-300/30 rounded-full blur-[80px]" />
+  <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-teal-300/30 rounded-full blur-[80px]" />
+</div>
+
 
 
 
