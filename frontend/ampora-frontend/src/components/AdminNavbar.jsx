@@ -12,12 +12,12 @@ export default function AdminNavbar() {
   const [profileOpen, setProfileOpen] = useState(false);
 
   const menuItems = [
-    { label: "Dashboard", path: "/" },
-    { label: "Vehicle", path: "/vehicle" },
-    { label: "User", path: "/users" },
-    { label: "Charging Station", path: "/charging-station" },
-    { label: "Billing", path: "/billing" },
-    { label: "Charging Session", path: "/charging-session" },
+    { label: "Dashboard", path: "/admin" },
+    { label: "Vehicle", path: "/admin/vehicle" },
+    { label: "User", path: "/admin/users" },
+    { label: "Charging Station", path: "/admin/charger-stations" },
+    { label: "Billing", path: "/admin/billing" },
+    { label: "Charging Session", path: "/admin/charger-session" },
   ];
 
   const fadeUp = {

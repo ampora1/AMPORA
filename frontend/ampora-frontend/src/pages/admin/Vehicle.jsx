@@ -1,99 +1,169 @@
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import {
+  fetchVehicles,
+  createVehicle,
+  updateVehicle,
+  deleteVehicleApi,
+} from "./api/vehicleService";
+
+const emptyForm = {
+  vehicleId: "",
+  model: "",
+  batteryCapacityKwh: "",
+  efficiencyKmPerKwh: "",
+  connectorType: "",
+  userId: "",
+};
 
 export default function Vehicle() {
-  const [vehicles, setVehicles] = useState([
-    {
-      vehicleId: "V001",
-      model: "Tesla Model 3",
-      batteryCapacityKwh: 60,
-      efficiencyKmPerKwh: 6,
-      connectorType: "Type 2",
-      userId: "U101",
-    },
-    {
-      vehicleId: "V002",
-      model: "Nissan Leaf",
-      batteryCapacityKwh: 40,
-      efficiencyKmPerKwh: 5,
-      connectorType: "CHAdeMO",
-      userId: "U103",
-    },
-  ]);
-
-  const [showModal, setShowModal] = useState(false);
-  const [editIndex, setEditIndex] = useState(null);
+  const [vehicles, setVehicles] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [editId, setEditId] = useState(null); // vehicleId we’re editing
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
 
-  const [form, setForm] = useState({
-    vehicleId: "",
-    model: "",
-    batteryCapacityKwh: "",
-    efficiencyKmPerKwh: "",
-    connectorType: "",
-    userId: "",
-  });
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchVehicles();
+        setVehicles(data || []);
+      } catch (err) {
+        console.error(err);
+        setError(err.message || "Failed to load vehicles");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Filter Vehicles (Search)
-  const filteredVehicles = vehicles.filter(
-    (v) =>
-      v.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.vehicleId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.userId.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    load();
+  }, []);
 
-  // Calculate stats
   const totalVehicles = vehicles.length;
-  const avgBattery =
-    vehicles.reduce((sum, v) => sum + Number(v.batteryCapacityKwh), 0) /
-      totalVehicles || 0;
-  const avgEfficiency =
-    vehicles.reduce((sum, v) => sum + Number(v.efficiencyKmPerKwh), 0) /
-      totalVehicles || 0;
-  const uniqueUsers = new Set(vehicles.map((v) => v.userId)).size;
+
+  const avgBattery = useMemo(() => {
+    if (vehicles.length === 0) return 0;
+    const sum = vehicles.reduce(
+      (acc, v) => acc + Number(v.batteryCapacityKwh || 0),
+      0
+    );
+    return sum / vehicles.length;
+  }, [vehicles]);
+
+  const avgEfficiency = useMemo(() => {
+    if (vehicles.length === 0) return 0;
+    const sum = vehicles.reduce(
+      (acc, v) => acc + Number(v.efficiencyKmPerKwh || 0),
+      0
+    );
+    return sum / vehicles.length;
+  }, [vehicles]);
+
+  const uniqueUsers = useMemo(() => {
+    const set = new Set(vehicles.map((v) => v.userId));
+    return set.size;
+  }, [vehicles]);
+
+  // 🔍 Search filter
+  const filteredVehicles = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return vehicles;
+
+    return vehicles.filter((v) => {
+      return (
+        v.vehicleId?.toLowerCase().includes(term) ||
+        v.model?.toLowerCase().includes(term) ||
+        v.connectorType?.toLowerCase().includes(term) ||
+        v.userId?.toLowerCase().includes(term)
+      );
+    });
+  }, [vehicles, searchTerm]);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const openAddModal = () => {
+    setForm(emptyForm);
+    setEditId(null);
+    setShowModal(true);
+  };
+
+  const openEditModal = (vehicle) => {
     setForm({
-      vehicleId: "",
-      model: "",
-      batteryCapacityKwh: "",
-      efficiencyKmPerKwh: "",
-      connectorType: "",
-      userId: "",
+      vehicleId: vehicle.vehicleId ?? "",
+      model: vehicle.model ?? "",
+      batteryCapacityKwh: vehicle.batteryCapacityKwh ?? "",
+      efficiencyKmPerKwh: vehicle.efficiencyKmPerKwh ?? "",
+      connectorType: vehicle.connectorType ?? "",
+      userId: vehicle.userId ?? "",
     });
-    setEditIndex(null);
+    setEditId(vehicle.vehicleId);
     setShowModal(true);
   };
 
-  const openEditModal = (index) => {
-    setForm(vehicles[index]);
-    setEditIndex(index);
-    setShowModal(true);
-  };
+  const saveVehicle = async () => {
+    try {
+      setSaving(true);
+      setError(null);
 
-  const saveVehicle = () => {
-    if (editIndex !== null) {
-      const updated = [...vehicles];
-      updated[editIndex] = form;
-      setVehicles(updated);
-    } else {
-      setVehicles([...vehicles, form]);
+      const payload = {
+        ...form,
+        batteryCapacityKwh: Number(form.batteryCapacityKwh),
+        efficiencyKmPerKwh: Number(form.efficiencyKmPerKwh),
+      };
+
+      if (!editId) {
+        const created = await createVehicle(payload);
+        setVehicles((prev) => [...prev, created]);
+      } else {
+        const updated = await updateVehicle(editId, payload);
+        setVehicles((prev) =>
+          prev.map((v) => (v.vehicleId === editId ? { ...v, ...updated } : v))
+        );
+      }
+
+      setShowModal(false);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to save vehicle");
+    } finally {
+      setSaving(false);
     }
-    setShowModal(false);
   };
 
-  const deleteVehicle = (index) => {
-    setVehicles(vehicles.filter((_, i) => i !== index));
+  const handleDelete = async (vehicleId) => {
+    const confirmed = window.confirm("Are you sure you want to delete this?");
+    if (!confirmed) return;
+
+    try {
+      await deleteVehicleApi(vehicleId);
+      setVehicles((prev) => prev.filter((v) => v.vehicleId !== vehicleId));
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to delete vehicle");
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-16 m-12">
       <div className="max-w-7xl mx-auto">
-        {/* Stats Cards */}
+        {/* Error / Loading */}
+        {error && (
+          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+        {loading && (
+          <div className="mb-4 text-sm text-gray-500">Loading vehicles...</div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
             <div className="flex items-center gap-4">
@@ -159,7 +229,6 @@ export default function Vehicle() {
           </div>
         </div>
 
-        {/* Table Section */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-800">
@@ -177,7 +246,7 @@ export default function Vehicle() {
 
               <button
                 onClick={openAddModal}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm"
+                className="px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm"
               >
                 <Plus size={20} /> Add Vehicle
               </button>
@@ -212,7 +281,7 @@ export default function Vehicle() {
                 </tr>
               </thead>
               <tbody>
-                {filteredVehicles.map((v, index) => (
+                {filteredVehicles.map((v) => (
                   <tr
                     key={v.vehicleId}
                     className="border-b border-gray-50 hover:bg-gray-50 transition"
@@ -240,13 +309,13 @@ export default function Vehicle() {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
                         <button
-                          onClick={() => openEditModal(index)}
+                          onClick={() => openEditModal(v)}
                           className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
                         >
                           <Pencil size={16} />
                         </button>
                         <button
-                          onClick={() => deleteVehicle(index)}
+                          onClick={() => handleDelete(v.vehicleId)}
                           className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition"
                         >
                           <Trash2 size={16} />
@@ -255,6 +324,17 @@ export default function Vehicle() {
                     </td>
                   </tr>
                 ))}
+
+                {!loading && filteredVehicles.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-6 py-8 text-center text-sm text-gray-500"
+                    >
+                      No vehicles found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -267,7 +347,7 @@ export default function Vehicle() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center">
               <h2 className="text-xl font-semibold text-gray-800">
-                {editIndex !== null ? "Edit Vehicle" : "Add New Vehicle"}
+                {editId ? "Edit Vehicle" : "Add New Vehicle"}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -284,6 +364,7 @@ export default function Vehicle() {
                 value={form.vehicleId}
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                disabled={!!editId} // avoid changing ID on edit
               />
               <input
                 name="model"
@@ -328,14 +409,20 @@ export default function Vehicle() {
               <button
                 onClick={() => setShowModal(false)}
                 className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium"
+                disabled={saving}
               >
                 Cancel
               </button>
               <button
                 onClick={saveVehicle}
-                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-medium shadow-sm"
+                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-medium shadow-sm disabled:opacity-60"
+                disabled={saving}
               >
-                {editIndex !== null ? "Update" : "Add"} Vehicle
+                {saving
+                  ? "Saving..."
+                  : editId
+                  ? "Update Vehicle"
+                  : "Add Vehicle"}
               </button>
             </div>
           </div>
