@@ -22,6 +22,7 @@ import Footer from "./components/Footer.jsx";
 import Register from "./pages/Register.jsx";
 import Forget from "./pages/Forget.jsx";
 import LoaderProvider from "./components/LoaderProvider.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 
 
@@ -30,7 +31,7 @@ function AppLayout() {
   const location = useLocation();
 
   // Pages where navbar should be hidden
-  const hideNavbarPages = ["/","/register","/forget"];
+  const hideNavbarPages = ["/login","/register","/forget"];
   const shouldHideNavbar = hideNavbarPages.includes(location.pathname);
 
   return (
@@ -38,19 +39,20 @@ function AppLayout() {
       {!shouldHideNavbar && <Navbar />}
 <LoaderProvider>
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/home" element={<Home />} />
+         <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+       
         <Route path="/register" element={<Register/>} />
         <Route path="/forget" element={<Forget/>} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/trip" element={<TripPlanner />} />
-        <Route path="/stations" element={<StationFinder />} />
-        <Route path="/bookings" element={<BookingsPage />} />
+        <Route path="/stations" element={<ProtectedRoute><StationFinder /></ProtectedRoute>} />
+        <Route path="/bookings" element={ <ProtectedRoute><BookingsPage /></ProtectedRoute>} />
         <Route path="/payments" element={<PaymentPage />} />
-        <Route path="/user-dashboard" element={<UserDashboard />} />
-        <Route path="/profile" element={<UserProfile />} />
-        <Route path="/vehicles" element={<VehicleManager />} />
-        <Route path="/history" element={<ChargingHistory />} />
+        <Route path="/user-dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
+        <Route path="/profile" element={  <ProtectedRoute><UserProfile /></ProtectedRoute>} />
+        <Route path="/vehicles" element={ <ProtectedRoute><VehicleManager /></ProtectedRoute>} />
+        <Route path="/history" element={  <ProtectedRoute><ChargingHistory /></ProtectedRoute>} />
         <Route path="/plans" element={<SubscriptionPlans />} />
 <Route path="/station/:id" element={<StationDetails />} />
 <Route path="/notifications" element={<Notifications />} />

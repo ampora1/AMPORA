@@ -15,6 +15,7 @@ import {
 import { MdEvStation } from "react-icons/md";
 import { TbBatteryCharging } from "react-icons/tb";
 import { LuCar } from "react-icons/lu";   
+import { logout } from "../utils/auth";
 
 const glass =
   "backdrop-blur-xl bg-white/70 border border-emerald-200/60 shadow-[0_8px_35px_rgba(16,185,129,0.12)]";
@@ -80,7 +81,7 @@ const [name,setName] = useState("");
     { title: "Bookings", icon: <FiCalendar />, to: "/bookings" },
     { title: "View Plans & Subscription", icon: <FiCreditCard />, to: "/payments" },
     { title: "Charging History", icon: <FiZap />, to: "/history" },
-     { title: "Logout", icon: <FiLogOut />, onClick: logoutFunction , to: "/" },
+     { title: "Logout", icon: <FiLogOut />, onClick: logout , to: "/" },
   ];
 
   const pill =

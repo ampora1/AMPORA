@@ -13,10 +13,7 @@ const fadeUp = {
 };
 
 const Home = () => {
-  if(localStorage.getItem("token")==null){
-    window.location.href="/"
-    return null;
-  }
+
 
   return (
     <div className="w-screen min-h-screen bg-[#EDFFFF] overflow-hidden">
@@ -46,7 +43,7 @@ const Home = () => {
             transition={{ type: "spring", stiffness: 200 }}
             className="w-12/12 lg:w-3/12 h-[230px] bg-white shadow-lg rounded-2xl p-6 flex flex-col items-center justify-center hover:shadow-2xl cursor-pointer"
           >
-            <h3 className="font-bold text-xl text-gray-800">{localStorage.getItem("token")}</h3>
+            <h3 className="font-bold text-xl text-gray-800">{item.title}</h3>
             <img src={item.img} className="w-20 h-20 mt-4" />
           </motion.div>
         ))}
