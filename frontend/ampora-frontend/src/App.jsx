@@ -30,7 +30,7 @@ function AppLayout() {
   const location = useLocation();
 
   // Pages where navbar should be hidden
-  const hideNavbarPages = ["/login","/register","/forget"];
+  const hideNavbarPages = ["/","/register","/forget"];
   const shouldHideNavbar = hideNavbarPages.includes(location.pathname);
 
   return (
@@ -38,8 +38,8 @@ function AppLayout() {
       {!shouldHideNavbar && <Navbar />}
 <LoaderProvider>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Login />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/register" element={<Register/>} />
         <Route path="/forget" element={<Forget/>} />
         <Route path="/dashboard" element={<Dashboard />} />

@@ -28,6 +28,7 @@ export default function Login() {
 
    
     localStorage.setItem("token", data.token);
+    localStorage.setItem("userId", data.user_id);
 
     
     window.location.href = "/user-dashboard";
