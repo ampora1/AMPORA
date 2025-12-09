@@ -61,7 +61,6 @@ export default function AdminNavbar() {
             </motion.div>
           </div>
 
-          {/* Desktop Menu */}
           <nav className="hidden md:flex gap-8 font-medium text-white/80">
             {menuItems.map((item) => (
               <Link
@@ -83,43 +82,17 @@ export default function AdminNavbar() {
 
             <button
               onClick={() => setMessagesOpen(true)}
-              className="nav-button relative w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10 transition"
+              className="message-bell-btn"
               aria-label="Messages"
             >
-              <FiBell className="text-xl text-white" />
+              <FiBell className="bell" />
 
               <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 shadow" />
             </button>
-
-            <div className="relative">
-              <button
-                onClick={() => setProfileOpen(!profileOpen)}
-                className="nav-button w-10 h-10 rounded-full border border-green-500 flex items-center justify-center"
-              >
-                <FiUser className="text-green-500 text-xl" />
-              </button>
-
-              {profileOpen && (
-                <div className="absolute right-0 mt-3 w-48 bg-white/95 backdrop-blur-xl shadow-lg rounded-xl py-2 text-gray-700">
-                  <Link
-                    to="/admin/profile"
-                    className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100"
-                  >
-                    <FiSettings /> Profile Settings
-                  </Link>
-                  <Link
-                    to="/logout"
-                    className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100"
-                  >
-                    <FiLogOut /> Logout
-                  </Link>
-                </div>
-              )}
-            </div>
           </div>
 
           <button
-            className="nav-button md:hidden text-white"
+            className="md:hidden text-white"
             onClick={() => setOpen(!open)}
           >
             <svg
@@ -174,7 +147,6 @@ export default function AdminNavbar() {
         )}
       </header>
 
-      {/* Message slide-over (from bell) */}
       {messagesOpen && (
         <MessageCenter
           isOpen={messagesOpen}

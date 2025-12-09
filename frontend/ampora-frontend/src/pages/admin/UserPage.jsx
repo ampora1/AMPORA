@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { UserPlus, X, Pencil, Trash2 } from "lucide-react";
+import Modal from "./component/Modal";
 import {
   fetchUser,
   createUser,
@@ -21,6 +22,7 @@ export default function UserPage() {
     email: "",
     password: "",
     phone: "",
+    role: "",
   });
 
   useEffect(() => {
@@ -68,6 +70,7 @@ export default function UserPage() {
       email: "",
       password: "",
       phone: "",
+      role: "",
     });
     setShowModal(true);
   };
@@ -79,6 +82,7 @@ export default function UserPage() {
       email: user.email || "",
       password: "",
       phone: user.phone || "",
+      role: user.role || "",
     });
     setShowModal(true);
   };
@@ -93,6 +97,7 @@ export default function UserPage() {
         email: form.email,
         password: form.password,
         phone: form.phone,
+        role: form.role,
       };
 
       if (editingUserId === null) {
@@ -131,11 +136,11 @@ export default function UserPage() {
 
   function getRoleBadgeColor(role) {
     switch (role) {
-      case "Admin":
+      case "ADMIN":
         return "bg-purple-50 text-purple-700 border-purple-200";
-      case "Operater":
+      case "OPERATOR":
         return "bg-green-50 text-green-700 border-green-200";
-      case "User":
+      case "USER":
         return "bg-blue-50 text-blue-700 border-blue-200";
       default:
         return "bg-gray-50 text-gray-700 border-gray-200";
@@ -317,75 +322,75 @@ export default function UserPage() {
         </div>
 
         {/* Modal */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  {editingUserId !== null ? "Edit User" : "Add New User"}
-                </h2>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="p-6 space-y-4">
-                <input
-                  name="fullName"
-                  placeholder="Full Name"
-                  value={form.fullName}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-                />
-                <input
-                  name="email"
-                  placeholder="Email"
-                  value={form.email}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-                />
-                <input
-                  name="password"
-                  placeholder="Password"
-                  value={form.password}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-                />
-                <input
-                  name="phone"
-                  placeholder="phone"
-                  value={form.phone}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-                />
-              </div>
-
-              <div className="p-6 border-t border-gray-100 flex gap-3">
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium"
-                  disabled={saving}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveUser}
-                  className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-medium shadow-sm disabled:opacity-60"
-                  disabled={saving}
-                >
-                  {saving
-                    ? "Saving..."
-                    : editingUserId !== null
-                    ? "Update User"
-                    : "Add User"}
-                </button>
-              </div>
+        <Modal
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          title={editingUserId !== null ? "Edit User" : "Add New User"}
+          footer={
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowModal(false)}
+                className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium"
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveUser}
+                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-medium shadow-sm disabled:opacity-60"
+                disabled={saving}
+              >
+                {saving
+                  ? "Saving..."
+                  : editingUserId !== null
+                  ? "Update User"
+                  : "Add User"}
+              </button>
             </div>
+          }
+        >
+          <div className="p-6 space-y-4">
+            <input
+              name="fullName"
+              placeholder="Full Name"
+              value={form.fullName}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+            />
+            <input
+              name="email"
+              placeholder="Email"
+              value={form.email}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+            />
+            <input
+              name="password"
+              placeholder="Password"
+              value={form.password}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+            />
+            <input
+              name="phone"
+              placeholder="phone"
+              value={form.phone}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+            />
+            <select
+              name="role"
+              value={form.role}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+            >
+              <option value="">Select Role</option>
+              <option value="ADMIN">Admin</option>
+              <option value="OPERATOR">Operator</option>
+              <option value="USER">User</option>
+            </select>
           </div>
-        )}
+        </Modal>
       </div>
     </div>
   );

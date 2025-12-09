@@ -6,6 +6,8 @@ import {
   updateCharger,
   deleteCharger,
 } from "./api/chargerService";
+import Modal from "./component/Modal";
+import { fetchStations } from "./api/stationService";
 
 export default function ChargerPage() {
   const [chargers, setChargers] = useState([]);
@@ -15,6 +17,7 @@ export default function ChargerPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [stations, setStations] = useState([]);
 
   const [form, setForm] = useState({
     type: "",
@@ -48,9 +51,10 @@ export default function ChargerPage() {
   const availableChargers = chargers.filter(
     (c) => c.status === "AVAILABLE"
   ).length;
-  const inUseChargers = chargers.filter((c) => c.status === "IN_USE").length;
+  const inUseChargers = chargers.filter(
+    (c) => c.status === "UNAVAILABLE"
+  ).length;
 
-  // Filter (search by chargerID, type, stationName, status)
   const filteredChargers = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return chargers;
@@ -87,7 +91,6 @@ export default function ChargerPage() {
       type: charger.type || "",
       powerKw: charger.powerKw ?? "",
       status: charger.status || "",
-      // if backend also returns stationId, this will fill it, otherwise user can type
       stationId: charger.stationId || "",
     });
     setShowModal(true);
@@ -142,6 +145,23 @@ export default function ChargerPage() {
       setError(err.message || "Failed to delete charger");
     }
   };
+
+  useEffect(() => {
+    const loads = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchStations();
+        setStations(data || []);
+      } catch (err) {
+        console.error(err);
+        setError(err.message || "Failed to load stations");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loads();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-16 m-12">
@@ -200,7 +220,7 @@ export default function ChargerPage() {
                 <div className="w-6 h-6 bg-orange-500 rounded-lg"></div>
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">In Use</p>
+                <p className="text-xs text-gray-500 font-medium">Unavailable</p>
                 <p className="text-2xl font-bold text-gray-800">
                   {inUseChargers}
                 </p>
@@ -280,9 +300,9 @@ export default function ChargerPage() {
                           className={`px-3 py-1 rounded-lg text-xs font-medium ${
                             c.status === "AVAILABLE"
                               ? "bg-green-100 text-green-700"
-                              : c.status === "IN_USE"
+                              : c.status === "MAINTENANCE"
                               ? "bg-blue-100 text-blue-700"
-                              : c.status === "OFFLINE"
+                              : c.status === "UNAVAILABLE"
                               ? "bg-red-100 text-red-700"
                               : "bg-gray-100 text-gray-700"
                           }`}
@@ -330,89 +350,92 @@ export default function ChargerPage() {
       </div>
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-800">
-                {editingChargerId !== null ? "Edit Charger" : "Add New Charger"}
-              </h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <select
-                name="type"
-                value={form.type}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              >
-                <option value="">Select Type</option>
-                <option value="AC_SLOW">AC_SLOW</option>
-                <option value="AC_FAST">AC_FAST</option>
-                <option value="DC_FAST">DC_FAST</option>
-              </select>
-
-              <input
-                name="powerKw"
-                type="number"
-                step="0.1"
-                placeholder="Power (kW)"
-                value={form.powerKw}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              />
-
-              <select
-                name="status"
-                value={form.status}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              >
-                <option value="">Select Status</option>
-                <option value="AVAILABLE">AVAILABLE</option>
-                <option value="IN_USE">IN_USE</option>
-                <option value="OFFLINE">OFFLINE</option>
-                <option value="MAINTENANCE">MAINTENANCE</option>
-              </select>
-
-              <input
-                name="stationId"
-                placeholder="Station ID"
-                value={form.stationId}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              />
-            </div>
-
-            <div className="p-6 border-t border-gray-100 flex gap-3">
-              <button
-                onClick={() => setShowModal(false)}
-                className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium"
-                disabled={saving}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveCharger}
-                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-medium shadow-sm disabled:opacity-60"
-                disabled={saving}
-              >
-                {saving
-                  ? "Saving..."
-                  : editingChargerId !== null
-                  ? "Update Charger"
-                  : "Add Charger"}
-              </button>
-            </div>
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editingChargerId ? "Edit Charger" : "Add Charger"}
+        footer={
+          <div className="flex justify-end gap-4">
+            <button
+              onClick={() => setShowModal(false)}
+              className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={saveCharger}
+              className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50"
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Type
+            </label>
+            <select
+              name="type"
+              value={form.type}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+            >
+              <option value="">Select type</option>
+              <option value="Slow">Slow</option>
+              <option value="Fast">Fast</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Power (kW)
+            </label>
+            <input
+              type="number"
+              name="powerKw"
+              value={form.powerKw}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Status
+            </label>
+            <select
+              name="status"
+              value={form.status}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+            >
+              <option value="">Select status</option>
+              <option value="AVAILABLE">AVAILABLE</option>
+              <option value="UNAVAILABLE">UNAVAILABLE</option>
+              <option value="MAINTENANCE">MAINTENANCE</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Station ID
+            </label>
+            <select
+              name="stationId"
+              value={form.stationId}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+            >
+              <option value="">Select station</option>
+              {stations.map((station) => (
+                <option key={station.stationId} value={station.stationId}>
+                  {station.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

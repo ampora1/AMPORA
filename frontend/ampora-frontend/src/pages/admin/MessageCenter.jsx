@@ -2,7 +2,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiX,
   FiSend,
   FiUser,
   FiHeadphones,
@@ -12,25 +11,44 @@ import {
   FiCheck,
 } from "react-icons/fi";
 
-// Dummy messages preview
+const allReceivers = [
+  { id: "u1", name: "Nimal Perera", email: "nimal@example.com", role: "USER" },
+  { id: "u2", name: "Jane Smith", email: "jane@example.com", role: "USER" },
+  { id: "o1", name: "Operator A", email: "op-a@example.com", role: "OPERATOR" },
+  { id: "o2", name: "Operator B", email: "op-b@example.com", role: "OPERATOR" },
+];
+
 const initialMessages = [
   {
     id: 1,
     from: "ADMIN",
     to: "USER",
-    name: "User – John Doe",
-    subject: "Account verification",
-    content: "Hi John, your account has been verified successfully ✅",
-    time: "2 min ago",
+    receiverId: "u1", // Nimal
+    name: "User – Nimal Perera",
+    content: "Hi Nimal, your account has been approved ✅",
+    time: "2 hours ago",
+    contextType: "DIRECT",
   },
-];
-
-// 🔹 Dummy user/operator data (replace with API later)
-const allReceivers = [
-  { id: "u1", name: "John Doe", email: "john@example.com", role: "USER" },
-  { id: "u2", name: "Jane Smith", email: "jane@example.com", role: "USER" },
-  { id: "o1", name: "Operator A", email: "op-a@example.com", role: "OPERATOR" },
-  { id: "o2", name: "Operator B", email: "op-b@example.com", role: "OPERATOR" },
+  {
+    id: 2,
+    from: "u1",
+    to: "ADMIN",
+    receiverId: "u1", // Nimal
+    name: "Nimal Perera",
+    content: "Thank you! I have another question about billing.",
+    time: "1 hour ago",
+    contextType: "DIRECT",
+  },
+  {
+    id: 3,
+    from: "ADMIN",
+    to: "BROADCAST_USERS",
+    name: "All Users",
+    content: "System maintenance will occur tonight at 11 PM.",
+    time: "30 min ago",
+    contextType: "BROADCAST",
+    broadcastTarget: "USERS",
+  },
 ];
 
 export default function MessageCenter({ isOpen, onClose }) {
@@ -40,7 +58,6 @@ export default function MessageCenter({ isOpen, onClose }) {
   const [receiverType, setReceiverType] = useState("USER"); // USER | OPERATOR
   const [broadcastTarget, setBroadcastTarget] = useState("USERS"); // USERS | OPERATORS | ALL
 
-  const [subject, setSubject] = useState("");
   const [newMessage, setNewMessage] = useState("");
 
   // 🔹 selection for direct mode
@@ -58,6 +75,23 @@ export default function MessageCenter({ isOpen, onClose }) {
     });
   }, [searchText, receiverType]);
 
+  // 🔹 Messages shown in center (depends on mode & selected user)
+  const visibleMessages = useMemo(() => {
+    if (mode === "DIRECT") {
+      if (!selectedReceiver) return [];
+      return messages.filter(
+        (m) =>
+          m.contextType === "DIRECT" && m.receiverId === selectedReceiver.id
+      );
+    }
+
+    // BROADCAST mode
+    return messages.filter(
+      (m) =>
+        m.contextType === "BROADCAST" && m.broadcastTarget === broadcastTarget
+    );
+  }, [messages, mode, selectedReceiver, broadcastTarget]);
+
   const handleSend = (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
@@ -70,13 +104,19 @@ export default function MessageCenter({ isOpen, onClose }) {
 
     let previewName;
     let toTag;
+    let contextType;
+    let receiverId = null;
+    let extra = {};
 
     if (mode === "DIRECT") {
       previewName = `${
         selectedReceiver.role === "USER" ? "User" : "Operator"
       } – ${selectedReceiver.name}`;
       toTag = selectedReceiver.role;
+      contextType = "DIRECT";
+      receiverId = selectedReceiver.id;
     } else {
+      contextType = "BROADCAST";
       if (broadcastTarget === "USERS") {
         previewName = "All Users";
         toTag = "BROADCAST_USERS";
@@ -87,6 +127,7 @@ export default function MessageCenter({ isOpen, onClose }) {
         previewName = "Users & Operators";
         toTag = "BROADCAST_ALL";
       }
+      extra.broadcastTarget = broadcastTarget;
     }
 
     const msg = {
@@ -94,30 +135,27 @@ export default function MessageCenter({ isOpen, onClose }) {
       from: "ADMIN",
       to: toTag,
       name: previewName,
-      subject:
-        subject ||
-        (mode === "BROADCAST" ? "Broadcast message" : "No subject provided"),
       content: newMessage.trim(),
       time: "Now",
+      contextType,
+      receiverId,
+      ...extra,
     };
 
     setMessages((prev) => [...prev, msg]);
     setNewMessage("");
 
-    // 🔗 Here is where you will call backend:
-
+    // 🔗 Backend call placeholder:
     // if (mode === "DIRECT") {
     //   await axios.post("/api/messages/direct", {
-    //     senderId: currentAdminId,      // from auth
+    //     senderId: currentAdminId,
     //     receiverId: selectedReceiver.id,
-    //     subject,
     //     content: newMessage.trim(),
     //   });
     // } else {
     //   await axios.post("/api/messages/broadcast", {
     //     senderId: currentAdminId,
-    //     target: broadcastTarget,       // "USERS" | "OPERATORS" | "ALL"
-    //     subject,
+    //     target: broadcastTarget,
     //     content: newMessage.trim(),
     //   });
     // }
@@ -143,7 +181,7 @@ export default function MessageCenter({ isOpen, onClose }) {
             // prevent closing when clicking inside
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
+            {/* Header (no close button now) */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-emerald-50 bg-white/70 backdrop-blur-xl">
               <div>
                 <p className="text-xs uppercase tracking-wide text-emerald-600 font-semibold">
@@ -153,14 +191,6 @@ export default function MessageCenter({ isOpen, onClose }) {
                   Messages to Users & Operators
                 </h2>
               </div>
-
-              {/* ❌ close button */}
-              <button
-                onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-emerald-50 text-slate-700"
-              >
-                <FiX />
-              </button>
             </div>
 
             {/* Mode toggle */}
@@ -299,7 +329,7 @@ export default function MessageCenter({ isOpen, onClose }) {
                 </div>
               )}
 
-              {/* BROADCAST: choose audience (unchanged idea) */}
+              {/* BROADCAST: choose audience */}
               {mode === "BROADCAST" && (
                 <div className="mt-3">
                   <p className="text-[11px] text-slate-500 mb-1">
@@ -344,26 +374,24 @@ export default function MessageCenter({ isOpen, onClose }) {
               )}
             </div>
 
-            {/* Subject + messages + composer (shortened) */}
+            {/* Messages + composer */}
             <div className="flex-1 flex flex-col px-4 py-3 gap-3 overflow-hidden">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">
-                  Subject
-                </label>
-                <input
-                  type="text"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="Subject of the message..."
-                  className="w-full rounded-xl border border-emerald-100 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 placeholder:text-slate-300"
-                />
-              </div>
-
               <div className="flex-1 rounded-2xl border border-emerald-100 bg-white/70 overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between px-3 py-2 border-b border-emerald-50 text-xs text-slate-500">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    Live thread preview
+                    {mode === "DIRECT" && selectedReceiver ? (
+                      <span>
+                        Conversation with{" "}
+                        <span className="font-semibold">
+                          {selectedReceiver.name}
+                        </span>
+                      </span>
+                    ) : mode === "DIRECT" ? (
+                      <span>Select a user to view history</span>
+                    ) : (
+                      <span>Broadcast thread</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-1">
                     <FiClock />
@@ -372,7 +400,15 @@ export default function MessageCenter({ isOpen, onClose }) {
                 </div>
 
                 <div className="flex-1 p-3 space-y-3 overflow-y-auto">
-                  {messages.map((msg) => {
+                  {visibleMessages.length === 0 && (
+                    <p className="text-[11px] text-slate-400 text-center mt-6">
+                      {mode === "DIRECT"
+                        ? "No messages yet for this user."
+                        : "No broadcast messages yet for this audience."}
+                    </p>
+                  )}
+
+                  {visibleMessages.map((msg) => {
                     const isAdmin = msg.from === "ADMIN";
                     return (
                       <div
@@ -402,9 +438,6 @@ export default function MessageCenter({ isOpen, onClose }) {
                               {msg.time}
                             </span>
                           </div>
-                          <p className="text-[11px] font-semibold opacity-80">
-                            {msg.subject}
-                          </p>
                           <p className="text-[11px] mt-0.5 leading-snug">
                             {msg.content}
                           </p>
@@ -436,14 +469,6 @@ export default function MessageCenter({ isOpen, onClose }) {
                   </button>
                 </div>
               </form>
-
-              <button
-                type="button"
-                onClick={onClose}
-                className="mt-1 text-[11px] text-slate-400 underline self-center hover:text-slate-600"
-              >
-                Close message panel
-              </button>
             </div>
           </motion.div>
         </motion.div>

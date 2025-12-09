@@ -1,7 +1,6 @@
 import { Outlet } from "react-router-dom";
 import AdminNavbar from "./AdminNavbar";
 import Footer from "./Footer";
-import "../pages/admin/adminstyle.css";
 
 export default function AdminLayout() {
   return (
