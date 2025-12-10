@@ -1,5 +1,6 @@
 import { use, useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 import {
   fetchStations,
@@ -11,6 +12,7 @@ import Modal from "./component/Modal";
 import { fetchUser } from "./api/userService";
 
 export default function ChargerStationPage() {
+  const location = useLocation();
   const [stations, setStations] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingStationId, setEditingStationId] = useState(null); // store stationId
@@ -46,6 +48,12 @@ export default function ChargerStationPage() {
     };
     load();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.openAddModal) {
+      openAddModal();
+    }
+  }, [location.state]);
 
   const totalStations = stations.length;
   const activeStations = stations.filter((s) => s.status === "ACTIVE").length;

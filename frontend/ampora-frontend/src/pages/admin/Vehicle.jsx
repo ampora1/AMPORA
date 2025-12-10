@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Modal from "./component/Modal";
+import { useLocation } from "react-router-dom";
 
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import {
@@ -19,6 +20,7 @@ const emptyForm = {
 import { fetchUser } from "./api/userService";
 
 export default function Vehicle() {
+  const location = useLocation();
   const [vehicles, setVehicles] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -46,6 +48,12 @@ export default function Vehicle() {
 
     load();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.openAddModal) {
+      openAddModal();
+    }
+  }, [location.state]);
 
   const totalVehicles = vehicles.length;
 

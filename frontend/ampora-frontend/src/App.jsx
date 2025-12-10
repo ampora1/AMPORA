@@ -34,6 +34,7 @@ import AdminVehicle from "./pages/admin/Vehicle.jsx";
 
 import AdminLayout from "./components/Layout.jsx";
 import ChargerPage from "./pages/admin/Charger.jsx";
+import Subscription from "./pages/admin/Subscription.jsx";
 
 function AppLayout() {
   const location = useLocation();
@@ -82,6 +83,7 @@ function AppLayout() {
               element={<AdminChargerStationPage />}
             />{" "}
             <Route path="charger" element={<ChargerPage />} />
+            <Route path="subscriptions" element={<Subscription />} />
           </Route>
         </Routes>
       </LoaderProvider>

@@ -1,5 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { fetchUser } from "./api/userService";
+import { fetchStations } from "./api/stationService";
+import { fetchSessions } from "./api/chargerSession";
 import {
   Plus,
   Plug,
@@ -16,6 +19,33 @@ import {
 export default function Dashboard() {
   const [selectedPeriod] = useState("week");
   const navigate = useNavigate();
+  const [stations, setStations] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [activesessions, setActiveSessions] = useState(0);
+  const [users, setUsers] = useState(0);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setLoading(true);
+      try {
+        const response = await fetchStations();
+        setStations(response.length);
+        const sessions = await fetchSessions();
+        const activeSessionsCount = sessions.filter(
+          (session) => session.status === "Active"
+        ).length;
+        setActiveSessions(activeSessionsCount);
+        const usersData = await fetchUser();
+        setUsers(usersData.length);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
+  }, []);
 
   const stats = useMemo(
     () => [
@@ -28,35 +58,40 @@ export default function Dashboard() {
       },
       {
         label: "Active Sessions",
-        value: "48",
+        value: activesessions.toString(),
         change: "+8.2%",
         icon: Activity,
         color: "from-green-400 to-green-500",
       },
       {
         label: "Total Users",
-        value: "1,234",
+        value: users.toString(),
         change: "+23.1%",
         icon: Users,
         color: "from-lime-400 to-lime-500",
       },
       {
         label: "Charging Stations",
-        value: "45",
+        value: stations.toString(),
         change: "+5.0%",
         icon: MapPin,
         color: "from-teal-400 to-teal-500",
       },
     ],
-    []
+    [activesessions, users, stations]
   );
 
   const actions = useMemo(
     () => [
       {
+        key: "add-station",
         label: "Add Station",
         icon: Plus,
         gradient: "from-emerald-400 to-emerald-500",
+        onClick: () =>
+          navigate("/admin/charger-stations", {
+            state: { openAddModal: true },
+          }),
       },
       {
         key: "add-charger",
@@ -72,14 +107,20 @@ export default function Dashboard() {
         gradient: "from-lime-400 to-lime-500",
       },
       {
+        key: "manage-users",
         label: "Manage Users",
         icon: Users,
         gradient: "from-teal-400 to-teal-500",
+        onClick: () =>
+          navigate("/admin/users", { state: { openAddModal: true } }),
       },
       {
+        key: "register-vehicle",
         label: "Register Vehicle",
         icon: Car,
         gradient: "from-emerald-500 to-green-500",
+        onClick: () =>
+          navigate("/admin/vehicle", { state: { openAddModal: true } }),
       },
     ],
     []
@@ -192,7 +233,8 @@ export default function Dashboard() {
               const Icon = action.icon;
               return (
                 <button
-                  key={index}
+                  key={action.key}
+                  onClick={action.onClick}
                   className="relative group overflow-hidden bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl border border-gray-200 hover:border-transparent hover:shadow-xl transition-all transform hover:-translate-y-1"
                 >
                   <div

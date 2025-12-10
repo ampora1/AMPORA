@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { UserPlus, X, Pencil, Trash2 } from "lucide-react";
 import Modal from "./component/Modal";
+import { useLocation } from "react-router-dom";
 import {
   fetchUser,
   createUser,
@@ -9,6 +10,7 @@ import {
 } from "./api/userService";
 
 export default function UserPage() {
+  const location = useLocation();
   const [users, setUsers] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null); // store userId instead of index
@@ -41,6 +43,12 @@ export default function UserPage() {
     };
     load();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.openAddModal) {
+      openAddModal();
+    }
+  }, [location.state]);
 
   const totalUsers = users.length;
 

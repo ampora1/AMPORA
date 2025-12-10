@@ -3,7 +3,13 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaGooglePlay, FaAppStoreIos } from "react-icons/fa";
-import { FiUser, FiSettings, FiLogOut, FiBell } from "react-icons/fi";
+import {
+  FiUser,
+  FiSettings,
+  FiLogOut,
+  FiBell,
+  FiChevronDown,
+} from "react-icons/fi";
 import "../pages/admin/adminstyle.css";
 
 import MessageCenter from "../pages/admin/MessageCenter.jsx";
@@ -12,19 +18,25 @@ import logo from "../assets/logo.png"; //
 
 const letters = ["A", "M", "P", "O", "R", "A"];
 
+// Now "Charging" is a parent with dropdown items
+const menuItems = [
+  { label: "Dashboard", path: "/admin" },
+  { label: "Vehicle", path: "/admin/vehicle" },
+  { label: "User", path: "/admin/users" },
+  { label: "Charging Station", path: "/admin/charger-stations" },
+  {
+    label: "Charging",
+    children: [
+      { label: "Charger", path: "/admin/charger" },
+      { label: "Subscriptions", path: "/admin/subscriptions" },
+    ],
+  },
+];
+
 export default function AdminNavbar() {
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [messagesOpen, setMessagesOpen] = useState(false);
-
-  const menuItems = [
-    { label: "Dashboard", path: "/admin" },
-    { label: "Vehicle", path: "/admin/vehicle" },
-    { label: "User", path: "/admin/users" },
-    { label: "Charging Station", path: "/admin/charger-stations" },
-    { label: "Charger", path: "/admin/charger" },
-    { label: "Charging Session", path: "/admin/charger-session" },
-  ];
 
   const fadeUp = {
     hidden: { opacity: 0, y: 10 },
@@ -61,16 +73,49 @@ export default function AdminNavbar() {
             </motion.div>
           </div>
 
-          <nav className="hidden md:flex gap-8 font-medium text-white/80">
-            {menuItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className="hover:text-white transition"
-              >
-                {item.label}
-              </Link>
-            ))}
+          {/* Desktop nav */}
+          <nav className=" hidden md:flex gap-8 font-medium text-white/80">
+            {menuItems.map((item) =>
+              item.children ? (
+                // Dropdown for Charging
+                <div
+                  key={item.label}
+                  className="relative group inline-flex items-center"
+                >
+                  <button
+                    nav-button
+                    type="button"
+                    className="flex items-center gap-1 hover:text-white transition"
+                  >
+                    {item.label}
+                    <FiChevronDown className="text-xs mt-0.5" />
+                  </button>
+
+                  {/* Dropdown menu */}
+                  <div className="absolute left-0 mt-2 w-48 bg-black/95 border border-white/10 rounded-xl shadow-lg opacity-0 scale-95 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-150">
+                    <div className="py-2">
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.path}
+                          to={child.path}
+                          className="block px-4 py-2 text-sm text-white/80 hover:text-white hover:bg-white/10"
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className="hover:text-white transition"
+                >
+                  {item.label}
+                </Link>
+              )
+            )}
           </nav>
 
           <div className="hidden md:flex items-center gap-5 text-white">
@@ -86,11 +131,11 @@ export default function AdminNavbar() {
               aria-label="Messages"
             >
               <FiBell className="bell" />
-
               <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 shadow" />
             </button>
           </div>
 
+          {/* Mobile hamburger */}
           <button
             className="md:hidden text-white"
             onClick={() => setOpen(!open)}
@@ -118,19 +163,40 @@ export default function AdminNavbar() {
           </button>
         </div>
 
+        {/* Mobile menu */}
         {open && (
           <div className="md:hidden bg-white px-6 pb-4 shadow-lg">
             <nav className="flex flex-col gap-4 text-gray-700 font-medium mt-2">
-              {menuItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setOpen(false)}
-                  className="hover:text-green-600"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {menuItems.map((item) =>
+                item.children ? (
+                  <div key={item.label} className="flex flex-col gap-1">
+                    <span className="text-gray-900 font-semibold">
+                      {item.label}
+                    </span>
+                    <div className="flex flex-col gap-2 ml-4 border-l border-gray-200 pl-3">
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.path}
+                          to={child.path}
+                          onClick={() => setOpen(false)}
+                          className="hover:text-green-600 text-sm"
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setOpen(false)}
+                    className="hover:text-green-600"
+                  >
+                    {item.label}
+                  </Link>
+                )
+              )}
             </nav>
 
             <div className="flex gap-3 mt-4">
