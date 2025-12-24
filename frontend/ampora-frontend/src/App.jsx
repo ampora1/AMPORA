@@ -22,7 +22,12 @@ import Footer from "./components/Footer.jsx";
 import Register from "./pages/Register.jsx";
 import Forget from "./pages/Forget.jsx";
 import LoaderProvider from "./components/LoaderProvider.jsx";
+import Operator from "./pages/Operator/Operator.jsx";
+import StationOp from "./pages/Operator/StationOp.jsx";
 
+import Maintenance from "./pages/Maintenance.jsx";
+import Reports from "./pages/Operator/Reports.jsx";
+import Booking from "./pages/Operator/Booking.jsx";
 
 
 // Layout wrapper that hides navbar on certain pages
@@ -56,6 +61,14 @@ function AppLayout() {
 <Route path="/notifications" element={<Notifications />} />
 <Route path="/settings" element={<Settings />} />
 <Route path="/help" element={<HelpSupport />} />
+<Route path="/operator" element={<Operator />} />
+<Route path="maintenance" element={<Maintenance />} />
+<Route path="/station-op" element={<StationOp />} />
+<Route path="/reports" element={<Reports />} />
+<Route path="/bookkings" element={<Booking />} />
+
+
+
       </Routes>
       </LoaderProvider>
       
