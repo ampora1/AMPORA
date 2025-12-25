@@ -1,54 +1,18 @@
-import React, { useState } from "react";
+// src/pages/StationFinder.jsx
+import React, { useState, useEffect } from "react";
 import { FiSearch } from "react-icons/fi";
 import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
-import StationCard from "../components/Station/StationCard"; // You will paste your card component here
+import StationCard from "../components/Station/StationCard";
+
+const API_BASE = "http://127.0.0.1:8083";
 
 const StationFinder = () => {
   const [search, setSearch] = useState("");
+  const [stations, setStations] = useState([]);
   const [selectedStation, setSelectedStation] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Fake station list (later load from backend)
-  const stations = [
-    {
-      id: 1,
-      name: "GreenCharge Downtown",
-      address: "123 Main St, Colombo",
-      lat: 6.9271,
-      lng: 79.8612,
-      available: 4,
-      total: 10,
-      renewable: 84,
-      queue: 1,
-    },
-    {
-      id: 2,
-      name: "Ampora FastCharge",
-      address: "Galle Rd, Mount Lavinia",
-      lat: 6.8393,
-      lng: 79.8645,
-      available: 7,
-      total: 12,
-      renewable: 92,
-      queue: 0,
-    },
-    {
-      id: 2,
-      name: "Electric FastCharge",
-      address: "Galle Rd, Mount Lavinia",
-      lat: 6.8393,
-      lng: 79.9645,
-      available: 7,
-      total: 12,
-      renewable: 92,
-      queue: 0,
-    },
-  ];
-
-  const filteredStations = stations.filter((s) =>
-    s.name.toLowerCase().includes(search.toLowerCase())
-  );
-
-  // Google Maps loader
+  // Load Google Maps
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
   });
@@ -63,9 +27,48 @@ const StationFinder = () => {
     lng: 79.8612,
   };
 
+  // 🔥 FETCH STATIONS FROM BACKEND
+  useEffect(() => {
+    async function loadStations() {
+      try {
+        const res = await fetch(`${API_BASE}/api/stations`);
+        const data = await res.json();
+
+        // Backend returns ARRAY, not { success:true }
+        const stationsArray = Array.isArray(data) ? data : [];
+
+        const formatted = stationsArray.map((s) => ({
+          id: s.stationId,
+          name: s.name,
+          address: s.address || "No Address",
+          lat: s.latitude,
+          lng: s.longitude,
+          available: s.available_ports ?? 0,
+          total: s.total_ports ?? 0,
+          renewable: s.renewable_percentage ?? 0,
+          queue: s.queue_length ?? 0,
+        }));
+
+        setStations(formatted);
+      } catch (err) {
+        console.error("Error loading stations:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadStations();
+  }, []);
+
+  // 🔍 Search filter
+  const filteredStations = stations.filter(
+    (s) =>
+      s.name.toLowerCase().includes(search.toLowerCase()) ||
+      s.address.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <div className=" w-screen overflow-x-hidden
- bg-[#EDFFFF] flex flex-col items-center pb-10">
+    <div className="w-screen overflow-x-hidden bg-[#EDFFFF] flex flex-col items-center pb-10">
 
       {/* Banner */}
       <div className="w-full h-[30vh] bg-black from-emerald-300 to-emerald-500 rounded-b-[50px] flex justify-center items-center shadow-md">
@@ -89,10 +92,12 @@ const StationFinder = () => {
       {/* Layout */}
       <div className="w-10/12 mt-10 flex flex-col lg:flex-row gap-6">
 
-        {/* MAP SECTION */}
+        {/* MAP */}
         <div className="sm:w-12/12 md:w-12/12 lg:w-7/12 h-[75vh] bg-white rounded-3xl shadow-xl overflow-hidden">
           {!isLoaded ? (
             <p className="text-center mt-10 text-gray-500">Loading Map...</p>
+          ) : loading ? (
+            <p className="text-center mt-10 text-gray-500">Loading stations...</p>
           ) : (
             <GoogleMap
               mapContainerStyle={mapContainerStyle}
@@ -116,11 +121,12 @@ const StationFinder = () => {
             Nearby Stations
           </h2>
 
-          {filteredStations.length === 0 && (
+          {loading && <p className="text-gray-500">Loading...</p>}
+
+          {filteredStations.length === 0 && !loading && (
             <p className="text-gray-500">No stations found.</p>
           )}
 
-          {/* STATION CARDS */}
           <div className="flex flex-col gap-5">
             {filteredStations.map((station) => (
               <div
@@ -135,7 +141,7 @@ const StationFinder = () => {
 
       </div>
 
-      {/* POPUP CARD WHEN MARKER CLICKED */}
+      {/* POPUP CARD */}
       {selectedStation && (
         <div className="fixed bottom-10 w-10/12 lg:w-4/12 bg-white rounded-3xl shadow-2xl p-5 animate-slideUp border border-emerald-200">
           <StationCard station={selectedStation} />

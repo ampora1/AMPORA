@@ -6,6 +6,9 @@ import { Await, Link } from 'react-router-dom';
 
 export default function Login() {
 
+  useState(()=>{
+    localStorage.clear();
+  });
   const[email,setEmail] = useState("");
   const[password,setPassword] = useState("");
 
@@ -25,9 +28,10 @@ export default function Login() {
 
     const data = await response.json();
     console.log("Login success:", data);
-
+    
    
     localStorage.setItem("token", data.token);
+    localStorage.setItem("userId", data.user_id);
 
     
     window.location.href = "/user-dashboard";
