@@ -41,6 +41,8 @@ import AdminUserpage from "./pages/admin/UserPage.jsx";
 import AdminVehicle from "./pages/admin/Vehicle.jsx";
 
 import AdminLayout from "./components/Layout.jsx";
+import ChargerPage from "./pages/admin/Charger.jsx";
+import Subscription from "./pages/admin/Subscription.jsx";
 
 
 function AppLayout() {
@@ -80,7 +82,6 @@ function AppLayout() {
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/help" element={<HelpSupport />} />
-
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboardpage />} />
             <Route path="dashboard" element={<AdminDashboardpage />} />{" "}
@@ -94,6 +95,8 @@ function AppLayout() {
               path="charger-stations"
               element={<AdminChargerStationPage />}
             />{" "}
+            <Route path="charger" element={<ChargerPage />} />
+            <Route path="subscriptions" element={<Subscription />} />
           </Route>
         </Routes>
 
