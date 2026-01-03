@@ -292,6 +292,11 @@ const [avoidHighways, setAvoidHighways] = useState(false);
               }
             >
               <option value="">Select Vehicle</option>
+              {isLoggedIn && vehicles.map((v) => (
+                <option key={v.vehicleId} value={v.vehicleId}>
+                  {v.brand_name} {v.model_name} ({v.rangeKm} km range)
+                </option>
+              ))}
               {isLoggedIn && vehicles.length === 0 && (
                 <option >
                  <a href="/vehicles">No vehicles found – add a vehicle first</a> 
