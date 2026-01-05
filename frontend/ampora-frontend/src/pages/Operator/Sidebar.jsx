@@ -16,12 +16,12 @@ export default function Sidebar() {
 
   const nav = [
     [HomeIcon, "Overview", "/operator"],
-    [MapPinIcon, "Stations", "/station-op"],
-    [BoltIcon, "Booking", "/bookkings"],
-    [CurrencyDollarIcon, "Payments", "/payments"],
-    [WrenchScrewdriverIcon, "Maintenance", "/maintenance"],
-    [DocumentTextIcon, "Reports", "/reports"],
-    [Cog6ToothIcon, "Settings", "/settings-op"],
+    [MapPinIcon, "Stations", "/operator/stations"],
+    [BoltIcon, "Booking", "/operator/bookings"],
+    [CurrencyDollarIcon, "Payments", "/operator/payments"],
+    [WrenchScrewdriverIcon, "Maintenance", "/operator/maintenance"],
+    [DocumentTextIcon, "Reports", "/operator/reports"],
+    [Cog6ToothIcon, "Settings", "/operator/settings"],
   ];
 
   return (

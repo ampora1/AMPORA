@@ -117,7 +117,7 @@ const [messages, setMessages] = useState([
   );
 
   return (
-    <div className="pt-6 px-8 pb-8 space-y-6 bg-emerald-50 min-h-screen">
+    <div className="pt-15 px-8 pb-8 space-y-6 bg-emerald-50 min-h-screen">
 
 
 
