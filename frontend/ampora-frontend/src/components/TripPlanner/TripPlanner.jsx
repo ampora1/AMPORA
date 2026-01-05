@@ -1,6 +1,6 @@
 // src/components/TripPlanner/TripPlanner.jsx
 /* global google */
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   GoogleMap,
   DirectionsRenderer,
@@ -11,8 +11,11 @@ import {
 } from "@react-google-maps/api";
 import { motion } from "framer-motion";
 
-const API_BASE = "http://127.0.0.1:8000";
+const ML_API_BASE = "http://127.0.0.1:8000";
+const BACKEND_API = "http://localhost:8083";
 const containerStyle = { width: "100%", height: "100%" };
+
+/* ---------------- Utilities ---------------- */
 
 // Fallback text → lat/lng using Google Geocoding API
 async function geocodeText(text, key) {
@@ -47,6 +50,25 @@ function pickShortestRouteIndex(dirResult) {
   return idxBest;
 }
 
+// Try to extract userId from localStorage or JWT token payload
+function getLoggedUserId() {
+  const stored = localStorage.getItem("userId");
+  if (stored) return stored;
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  try {
+    const payload = JSON.parse(atob(parts[1]));
+    // adjust claim name if your JWT uses another key
+    return payload?.userId || payload?.sub || payload?.uid || null;
+  } catch {
+    return null;
+  }
+}
+
+/* ---------------- Component ---------------- */
+
 export default function TripPlanner() {
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -56,9 +78,7 @@ export default function TripPlanner() {
   // UI
   const [loading, setLoading] = useState(false);
   const [renderMode, setRenderMode] = useState("osrm"); // 'osrm' | 'google'
-
-  // 🔥 Force map reload between plans
-  const [mapKey, setMapKey] = useState(0);
+  const [mapKey, setMapKey] = useState(0); // force map reload
 
   // Inputs
   const [startText, setStartText] = useState("");
@@ -67,12 +87,17 @@ export default function TripPlanner() {
   const [endGeo, setEndGeo] = useState(null);
   const [stops, setStops] = useState([]); // {id, text, location?}
 
+  // Vehicles (from backend)
+  const [vehicles, setVehicles] = useState([]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState(null);
+
   // Google route
   const [directions, setDirections] = useState(null);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
 
   // OSRM / backend
   const [stations, setStations] = useState([]);
+  const [bestStationIds, setBestStationIds] = useState(new Set());
   const [osrmPath, setOsrmPath] = useState([]); // [[lat,lon], ...]
   const [routeInfo, setRouteInfo] = useState(null);
 
@@ -128,12 +153,94 @@ export default function TripPlanner() {
     mapRef.current.fitBounds(bounds, 60);
   }
 
+  // --------- Load vehicles for logged user ----------
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userId = getLoggedUserId();
+
+    if (!userId || !token) return;
+
+    (async () => {
+      try {
+        const res = await fetch(
+          `${BACKEND_API}/api/vehicles/user/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const data = await res.json();
+        if (Array.isArray(data) && data.length) {
+          setVehicles(data);
+          setSelectedVehicleId(data[0].vehicleId); // default to first vehicle
+        } else {
+          setVehicles([]);
+        }
+      } catch (e) {
+        console.error("Failed to load vehicles:", e);
+      }
+    })();
+  }, []);
+
+  const selectedVehicle = useMemo(
+    () => vehicles.find((v) => v.vehicleId === selectedVehicleId) || null,
+    [vehicles, selectedVehicleId]
+  );
+
+  // --------- Station scoring / best selection ----------
+  function chooseBestStations(stationsList, routeSummary, vehicle) {
+    if (!stationsList?.length || !routeSummary || !vehicle) {
+      return new Set();
+    }
+    const distanceKm = Number(routeSummary.distance_km) || 0;
+    const rangeKm = Number(vehicle.rangeKm) || 0; // full-charge range
+    const connector = (vehicle.connectorType || "").toUpperCase();
+
+    // How many stops likely needed (simple heuristic)
+    const requiredStops = Math.max(0, Math.ceil(distanceKm / Math.max(1, rangeKm)) - 1);
+    const K = Math.min(Math.max(requiredStops, 1), 5); // pick between 1..5
+
+    // Score stations
+    const scored = stationsList.map((s) => {
+      const maxKw = s.max_power_kw || 0;
+      const distR = s.distance_to_route_km ?? 999;
+      const status = (s.status || "ACTIVE").toUpperCase();
+      const name = (s.name || "").toUpperCase();
+
+      let score = 0;
+      // connector match (very important)
+      if (name.includes(connector) || (s.connector_types || []).map(String).join("|").toUpperCase().includes(connector)) {
+        score += 3;
+      }
+      // fast DC preference
+      if (maxKw >= 90) score += 3;
+      else if (maxKw >= 60) score += 2;
+      else if (maxKw >= 22) score += 1;
+
+      // near the route
+      if (distR < 2) score += 2;
+      else if (distR < 5) score += 1;
+
+      // status
+      if (status === "ACTIVE" || status === "OPEN") score += 1;
+
+      return { s, score };
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+
+    const best = new Set(scored.slice(0, K).map((x) => x.s.station_id));
+    return best;
+  }
+
+  /* ---------------- Main: Plan Route ---------------- */
   async function planRoute() {
     if (!isLoaded) return;
 
     setLoading(true);
 
-    // 🔥 RESET MAP COMPLETELY — fixes leftover overlays after second/third plan
+    // 🔥 RESET MAP COMPLETELY — fixes leftover overlays after repeated plans
     setMapKey((k) => k + 1);
 
     // Reset old data
@@ -141,6 +248,7 @@ export default function TripPlanner() {
     setSelectedRouteIndex(0);
     setOsrmPath([]);
     setStations([]);
+    setBestStationIds(new Set());
     setRouteInfo(null);
     setSelectedStation(null);
     stopRefs.current = [];
@@ -179,8 +287,8 @@ export default function TripPlanner() {
       setDirections(gResult);
       setSelectedRouteIndex(bestIdx);
 
-      // OSRM route via backend
-      const resp = await fetch(`${API_BASE}/api/route`, {
+      // OSRM route via ML backend
+      const resp = await fetch(`${ML_API_BASE}/api/route`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ start: s, end: e, stops: wp }),
@@ -191,14 +299,25 @@ export default function TripPlanner() {
         console.error("Backend error:", data.error);
         setOsrmPath([]);
         setStations([]);
+        setBestStationIds(new Set());
       } else {
         const path = data.routes?.[0]?.path || [];
         setOsrmPath(path);
         setStations(data.nearby_stations || []);
         setRouteInfo(data.routes?.[0] || null);
 
-        // Fit map to OSRM polyline (the one backend used for stations/distance)
+        // Fit map to OSRM polyline (the one backend used)
         fitToOsrmPath(path);
+
+        // Compute best stations using the selected vehicle
+        if (selectedVehicle && data.routes?.[0]) {
+          const bestIds = chooseBestStations(
+            data.nearby_stations || [],
+            data.routes[0],
+            selectedVehicle
+          );
+          setBestStationIds(bestIds);
+        }
       }
 
       setRenderMode("osrm");
@@ -209,6 +328,28 @@ export default function TripPlanner() {
     }
   }
 
+  /* ---------------- Marker Icons ---------------- */
+  // Simple SVG pins with two colors: emerald (best) and steel-blue (others)
+  const svgPin = (hex) =>
+    {
+      const url =
+        `data:image/svg+xml;charset=UTF-8,` +
+        encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="${hex}" stroke="white" stroke-width="1.2">
+            <path d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/>
+          </svg>
+        `);
+      return {
+        url,
+        scaledSize: new google.maps.Size(36, 36),
+        anchor: new google.maps.Point(18, 36),
+      };
+    };
+
+  const iconBest = isLoaded ? svgPin("#10B981") : undefined;   // emerald
+  const iconOther = isLoaded ? svgPin("#3B82F6") : undefined;  // blue-500
+
+  /* ---------------- Render ---------------- */
   return (
     <div className="w-screen min-h-screen mt-20 bg-gradient-to-b from-emerald-50 via-teal-50 to-white relative">
       {/* THINKING OVERLAY */}
@@ -234,6 +375,46 @@ export default function TripPlanner() {
 
       {/* INPUTS */}
       <div className="max-w-6xl mx-auto px-4 pt-6 space-y-4">
+        {/* Vehicle selector */}
+        <div className="bg-white/80 p-3 border border-emerald-200 rounded-xl">
+          <label className="text-xs font-semibold text-emerald-700">Vehicle</label>
+          <div className="mt-1">
+            {vehicles.length === 0 ? (
+              <div className="text-sm text-emerald-900/70">
+                No vehicles found. Add one in{" "}
+                <a href="/vehicles" className="underline text-emerald-700">Vehicle Manager</a>.
+              </div>
+            ) : (
+              <select
+                value={selectedVehicleId || ""}
+                onChange={(e) => setSelectedVehicleId(e.target.value)}
+                className="w-full px-2 py-2 rounded-lg outline-none border border-emerald-300 bg-white/90 text-black"
+              >
+                {vehicles.map((v) => (
+                  <option key={v.vehicleId} value={v.vehicleId}>
+                    {v.brand_name} {v.model_name} • {Number(v.variant)} kWh • {v.connectorType} • {v.plate}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {selectedVehicle && (
+            <div className="mt-2 text-xs text-emerald-900/80">
+              <span className="mr-3">
+                <b>Range:</b> {Number(selectedVehicle.rangeKm)} km
+              </span>
+              <span className="mr-3">
+                <b>Battery:</b> {Number(selectedVehicle.variant)} kWh
+              </span>
+              <span>
+                <b>Connector:</b> {selectedVehicle.connectorType}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Start / End / Button */}
         <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
           {/* START */}
           <div className="bg-white/80 p-3 border border-emerald-200 rounded-xl">
@@ -375,7 +556,7 @@ export default function TripPlanner() {
       >
         {isLoaded && (
           <GoogleMap
-            key={mapKey}               // 🔥 FORCE MAP RELOAD FIX
+            key={mapKey} // 🔥 FORCE MAP RELOAD FIX
             onLoad={onMapLoad}
             mapContainerStyle={containerStyle}
             center={startGeo || center}
@@ -414,14 +595,18 @@ export default function TripPlanner() {
             )}
 
             {/* Station markers with modal trigger */}
-            {stations.map((s) => (
-              <Marker
-                key={s.station_id}
-                position={{ lat: s.lat, lng: s.lon }}
-                title={`${s.name} • ${s.max_power_kw || 0} kW`}
-                onClick={() => setSelectedStation(s)}
-              />
-            ))}
+            {stations.map((s) => {
+              const isBest = bestStationIds.has(s.station_id);
+              return (
+                <Marker
+                  key={s.station_id}
+                  position={{ lat: s.lat, lng: s.lon }}
+                  title={`${s.name} • ${s.max_power_kw || 0} kW`}
+                  icon={isBest ? iconBest : iconOther}
+                  onClick={() => setSelectedStation(s)}
+                />
+              );
+            })}
           </GoogleMap>
         )}
       </div>
@@ -499,24 +684,27 @@ export default function TripPlanner() {
           <div className="md:col-span-2 bg-white/80 backdrop-blur p-4 rounded-xl border border-emerald-200">
             <h3 className="font-bold text-emerald-700">Nearby Stations</h3>
             <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {stations.map((s) => (
-                <div key={s.station_id} className="rounded-xl border border-emerald-200 bg-white p-3">
-                  <p className="font-semibold">{s.name}</p>
-                  <p className="text-xs text-emerald-900/70">{s.address || "—"}</p>
-                  <div className="text-xs mt-1 text-emerald-900/80">
-                    <div>Max Power: <b>{s.max_power_kw || 0} kW</b></div>
-                    {s.distance_to_route_km != null && (
-                      <div>Distance to route: <b>{s.distance_to_route_km} km</b></div>
-                    )}
+              {stations.map((s) => {
+                const isBest = bestStationIds.has(s.station_id);
+                return (
+                  <div key={s.station_id} className={`rounded-xl border ${isBest ? "border-emerald-400" : "border-blue-200"} bg-white p-3`}>
+                    <p className={`font-semibold ${isBest ? "text-emerald-700" : "text-blue-700"}`}>{s.name}</p>
+                    <p className="text-xs text-emerald-900/70">{s.address || "—"}</p>
+                    <div className="text-xs mt-1 text-emerald-900/80">
+                      <div>Max Power: <b>{s.max_power_kw || 0} kW</b></div>
+                      {s.distance_to_route_km != null && (
+                        <div>Distance to route: <b>{s.distance_to_route_km} km</b></div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setSelectedStation(s)}
+                      className="mt-2 w-full text-sm px-3 py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                    >
+                      View details
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setSelectedStation(s)}
-                    className="mt-2 w-full text-sm px-3 py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                  >
-                    View details
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 // src/pages/UserDashboard.jsx
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 
 import {
@@ -14,16 +14,36 @@ import {
 
 import { MdEvStation } from "react-icons/md";
 import { TbBatteryCharging } from "react-icons/tb";
-import { LuCar } from "react-icons/lu";   // ✅ FIX: Replace FiCar
+import { LuCar } from "react-icons/lu";   
+import { logout } from "../utils/auth";
 
 const glass =
   "backdrop-blur-xl bg-white/70 border border-emerald-200/60 shadow-[0_8px_35px_rgba(16,185,129,0.12)]";
 
-const UserDashboard = () => {
-  // ------- Mock data (replace with API data) -------
+const UserDashboard =  () => {
+
+const [name,setName] = useState("");
+  async function fetchUserName() {
+  
+  const useresponse = await fetch(`http://localhost:8083/api/users/32389639-de6e-464a-afc9-d18060391373`,{
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  const userData = await useresponse.json();
+  setName(userData.fullName);
+  
+  }
+
+
+  fetchUserName();
+
   const user = {
-    name: "Hi, Sangeeth ",
+    name: name || "Loading...",
   };
+
+  
 
   const monthly = {
     spentLKR: 18450.75,
@@ -48,6 +68,11 @@ const UserDashboard = () => {
     rangeKm: 240,
     connector: "CHAdeMO",
   };
+  function logoutFunction(){
+    localStorage.setItem("token",null);
+    localStorage.clear();
+    window.location.href="/";
+  }
 
   // ------- Quick actions -------
   const quickActions = [
@@ -56,7 +81,7 @@ const UserDashboard = () => {
     { title: "Bookings", icon: <FiCalendar />, to: "/bookings" },
     { title: "View Plans & Subscription", icon: <FiCreditCard />, to: "/payments" },
     { title: "Charging History", icon: <FiZap />, to: "/history" },
-    { title: "Logout", icon: <FiLogOut />, to: "/logout" },
+     { title: "Logout", icon: <FiLogOut />, onClick: logout , to: "/" },
   ];
 
   const pill =
