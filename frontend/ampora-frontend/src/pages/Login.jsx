@@ -32,8 +32,13 @@ export default function Login() {
       const data = await res.json();
       localStorage.setItem("token", data.token);
       localStorage.setItem("userId", data.user_id);
-
-      window.location.href = "/user-dashboard";
+      if(data.role == "ADMIN"){
+        window.location.href = "/admin";
+      }else if(data.role == "OPERATOR"){
+        window.location.href = "/operator";
+      }else if(data.role == "USER"){
+        window.location.href = "/user-dashboard";
+      }
     } catch (err) {
       setError("Invalid email or password");
     } finally {
