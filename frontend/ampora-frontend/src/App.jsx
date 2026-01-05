@@ -36,10 +36,10 @@ import StationOp from "./pages/Operator/StationOp.jsx";
 import Reports from "./pages/Operator/Reports.jsx";
 import Booking from "./pages/Operator/Booking.jsx";
 import Settingsop from "./pages/Operator/Settingsop.jsx";
-import Maintenance from "./pages/Maintenance.jsx";
+import Maintenance from "./pages/Operator/Settingsop.jsx";
 
 /* ---------- ADMIN ---------- */
-import AdminLayout from "./components/Layout.jsx";
+
 import AdminDashboardpage from "./pages/admin/Dashboard.jsx";
 import AdminVehicle from "./pages/admin/Vehicle.jsx";
 
@@ -51,7 +51,7 @@ import AdminChargerStationPage from "./pages/admin/ChargerStation.jsx";
 import AdminLayout from "./components/Layout.jsx";
 import PaymentSuccess from "./pages/PaymentSuccess.jsx";
 import ChargerPage from "./pages/admin/Charger.jsx";
-import Subscription from "./pages/admin/Subscription.jsx";
+// import Subscription from "./pages/admin/subscriptionService.jsx";
 import BookingStation from "./pages/admin/BookingStation.jsx";
 import PackageSelector from "./pages/PackageSelector.jsx";
 
@@ -124,7 +124,7 @@ function AppLayout() {
               element={<AdminChargerStationPage />}
             />{" "}
             <Route path="charger" element={<ChargerPage />} />
-            <Route path="subscriptions" element={<Subscription />} />
+            {/* <Route path="subscriptions" element={<Subscription />} /> */}
             <Route path="BookingStation" element={<BookingStation />} />
 
           </Route>
