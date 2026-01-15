@@ -96,7 +96,7 @@ const Home = () => {
           whileInView="show"
           className="w-12/12 lg:w-5/12 bg-[#F8F8F8] rounded-[40px] shadow-xl p-8"
         >
-          <h2 className="text-[32px] font-bold text-gray-800">Power Up Your Life ⚡</h2>
+          <h2 className="text-[32px] font-bold text-gray-800">Power Up Your Life </h2>
 
           <div className="flex mt-6">
             <img src={icon1} className="w-32 h-32" />

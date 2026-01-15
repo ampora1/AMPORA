@@ -107,10 +107,10 @@ const [messages, setMessages] = useState([
 
   const kpis = useMemo(
     () => [
-      { label: "Charging Slots", value: 12, icon: MapPinIcon },
-      { label: "Live Sessions", value: 2, icon: SignalIcon },
-      { label: "Energy Delivered", value: "412 kWh", icon: BoltIcon },
-      { label: "Revenue Today", value: "$184.90", icon: CurrencyDollarIcon },
+      { label: "Charging Slots", value: 3, icon: MapPinIcon },
+      { label: "Live Sessions", value: 1, icon: SignalIcon },
+      { label: "Energy Delivered", value: "15 kWh", icon: BoltIcon },
+      { label: "Revenue Today", value: "Rs 1250.90", icon: CurrencyDollarIcon },
       { label: "System Health", value: "98.6%", icon: CpuChipIcon },
     ],
     []

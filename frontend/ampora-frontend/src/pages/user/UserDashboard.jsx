@@ -124,7 +124,7 @@ export default function UserDashboard() {
                 Energy used
               </h3>
               <p className="text-3xl font-extrabold text-emerald-700 mt-2">
-                212.4 kWh
+                12.4 kWh
               </p>
             </div>
 
@@ -133,7 +133,7 @@ export default function UserDashboard() {
                 Amount spent
               </h3>
               <p className="text-3xl font-extrabold text-emerald-700 mt-2">
-                LKR 18,450
+                LKR 2,450
               </p>
             </div>
           </motion.div>

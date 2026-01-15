@@ -95,7 +95,7 @@ export default function Navbar() {
                 Login
               </a>
               <a
-                href="/signup"
+                href="/register"
                 className="px-4 py-2 rounded-full bg-[#00d491]
                            text-black font-semibold hover:opacity-90 transition"
               >
@@ -174,7 +174,7 @@ export default function Navbar() {
                 Login
               </a>
               <a
-                href="/signup"
+                href="/register"
                 className="w-full text-center py-2 bg-[#00d491]
                            rounded-xl text-black font-semibold"
               >

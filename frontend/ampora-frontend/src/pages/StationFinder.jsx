@@ -10,6 +10,7 @@ import {
 import StationCard from "../components/Station/StationCard";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE = "http://127.0.0.1:8083";
 const RADIUS_KM = 10;
@@ -22,8 +23,8 @@ function distanceKm(lat1, lon1, lat2, lon2) {
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(lat1 * (Math.PI / 180)) *
-      Math.cos(lat2 * (Math.PI / 180)) *
-      Math.sin(dLon / 2) ** 2;
+    Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
@@ -32,6 +33,9 @@ export default function StationFinder() {
   const [stations, setStations] = useState([]);
   const [filteredStations, setFilteredStations] = useState([]);
   const [selectedStation, setSelectedStation] = useState(null);
+  const [selectedCharger, setSelectedCharger] = useState(null);
+  const [showPayment, setShowPayment] = useState(false);
+
   const [loading, setLoading] = useState(true);
 
   const searchRef = useRef(null);
@@ -41,7 +45,11 @@ export default function StationFinder() {
   const [bookingTime, setBookingTime] = useState("");
   const [duration, setDuration] = useState(1);
   const [availability, setAvailability] = useState(null);
+  // 🔎 Filters
+  const [chargerTypeFilter, setChargerTypeFilter] = useState("ALL");
+  const [minPowerFilter, setMinPowerFilter] = useState(0);
 
+  const navigate = useNavigate();
   const userId = localStorage.getItem("userId");
 
   const { isLoaded } = useLoadScript({
@@ -54,13 +62,17 @@ export default function StationFinder() {
     lat: 6.9271,
     lng: 79.8612,
   });
+  useEffect(() => {
+    const filtered = applyFilters(stations);
+    setFilteredStations(filtered);
+  }, [chargerTypeFilter, minPowerFilter, stations]);
 
-  /* ================= LOAD STATIONS ================= */
   useEffect(() => {
     async function loadStations() {
       try {
         const res = await fetch(`${API_BASE}/api/stations`);
         const data = await res.json();
+
 
         const formatted = (Array.isArray(data) ? data : []).map((s) => ({
           id: s.stationId,
@@ -68,13 +80,19 @@ export default function StationFinder() {
           address: s.address || "No Address",
           lat: s.latitude,
           lng: s.longitude,
-          chargerId:
-            s.chargers && s.chargers.length > 0
-              ? s.chargers[0].chargerID
-              : null,
-          maxPower: s.powerKw || 0,
-        }));
 
+
+          chargers: (s.chargers || []).map(c => ({
+            id: c.chargerID,
+            type: c.type,
+            powerKw: c.powerKw,
+            status: c.status
+          }))
+        }));
+        console.log(
+          "CHARGER TYPES:",
+          formatted.flatMap(s => s.chargers.map(c => c.type))
+        );
         setStations(formatted);
         setFilteredStations(formatted);
       } finally {
@@ -106,9 +124,12 @@ export default function StationFinder() {
     filterByDistance(location.lat, location.lng);
   }
 
-  /* ================= BOOKING ================= */
+
   async function checkAvailability() {
-    if (!bookingDate || !bookingTime || !duration) return;
+    if (!bookingDate || !bookingTime || !duration || !selectedCharger) {
+      alert("Select charger, date and time");
+      return;
+    }
 
     const dateStr = bookingDate.toISOString().split("T")[0];
     const [hh, mm] = bookingTime.split(":");
@@ -118,7 +139,7 @@ export default function StationFinder() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        chargerId: selectedStation.chargerId,
+        chargerId: selectedCharger.id,
         date: dateStr,
         startTime: `${hh}:${mm}`,
         endTime: `${endHour}:${mm}`,
@@ -128,36 +149,66 @@ export default function StationFinder() {
     const data = await res.json();
     setAvailability(data.available);
   }
+  function applyFilters(baseStations) {
+    return baseStations.filter((station) =>
+      station.chargers.some((charger) => {
+        const typeMatch =
+          chargerTypeFilter === "ALL" ||
+          charger.type === chargerTypeFilter;
 
-  async function createBooking() {
-    if (!availability) return;
+        const powerMatch =
+          charger.powerKw >= minPowerFilter;
 
-    const dateStr = bookingDate.toISOString().split("T")[0];
-    const [hh, mm] = bookingTime.split(":");
-
-    await fetch(`${API_BASE}/api/bookings`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        chargerId: selectedStation.chargerId,
-        date: dateStr,
-        startTime: `${dateStr}T${hh}:${mm}:00`,
-        endTime: `${dateStr}T${Number(hh) + duration}:${mm}:00`,
-        amount: duration * 800, // Example: 500 currency units per hour
-        bookingStatus: "PENDING",
-      }),
-    });
-
-    setSelectedStation(null);
+        return typeMatch && powerMatch;
+      })
+    );
   }
+
+
+
+  function filterByDistance(lat, lng) {
+    const nearby = stations.filter(
+      (st) => distanceKm(lat, lng, st.lat, st.lng) <= RADIUS_KM
+    );
+
+    setFilteredStations(applyFilters(nearby));
+  }
+
+
+  // async function confirmPayment(bookingId) {
+  //   await fetch(`${API_BASE}/api/payments/confirm/${bookingId}`, {
+  //     method: "POST",
+  //   });
+  // }
+  // async function createBooking() {
+  //   if (!availability) return;
+
+  //   const dateStr = bookingDate.toISOString().split("T")[0];
+  //   const [hh, mm] = bookingTime.split(":");
+
+  //   await fetch(`${API_BASE}/api/bookings`, {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify({
+  //       userId,
+  //       chargerId: selectedCharger.id,
+  //       date: dateStr,
+  //       startTime: `${dateStr}T${hh}:${mm}:00`,
+  //       endTime: `${dateStr}T${Number(hh) + duration}:${mm}:00`,
+  //       amount: duration * 800, // Example: 500 currency units per hour
+  //       bookingStatus: "PENDING",
+  //     }),
+  //   });
+
+  //   setSelectedStation(null);
+  // }
 
   if (!isLoaded || loading) return <p className="p-10">Loading…</p>;
 
   return (
     <div className="w-screen bg-teal-100 pb-20">
 
-      {/* ================= HEADER ================= */}
+
       <div className="relative h-[34vh] rounded-b-[70px] overflow-hidden
                       bg-gradient-to-tr from-teal-900 via-emerald-800 to-teal-700">
         <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 120">
@@ -177,7 +228,7 @@ export default function StationFinder() {
         </div>
       </div>
 
-      {/* ================= SEARCH ================= */}
+
       <div className="max-w-5xl mx-auto -mt-12 px-4">
         <div className="bg-white/95 backdrop-blur-xl p-5 rounded-2xl
                         shadow-[0_20px_50px_rgba(0,0,0,0.15)]
@@ -196,21 +247,72 @@ export default function StationFinder() {
           </Autocomplete>
         </div>
       </div>
-      {/* ================= INTRODUCTION ================= */}
-<div className="max-w-4xl mx-auto mt-10 px-6 text-center">
-  <p className="text-lg text-gray-700 leading-relaxed">
-    Discover reliable <span className="font-semibold text-emerald-600">EV charging stations</span> 
-    near you with ease.  
-    Search any location to instantly view nearby stations, compare availability,
-    and book your charging slot — all in one place.
-  </p>
+      {/* ================= FILTER BAR ================= */}
+      <div className="sticky top-4 z-20 mt-6">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-lg
+                    px-6 py-4 flex flex-col md:flex-row
+                    md:items-center md:justify-between gap-4">
 
-  <p className="mt-3 text-sm text-gray-500">
-    Smart routing • Real-time availability • Hassle-free booking
-  </p>
-</div>
+            {/* Charger Type Chips */}
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Charger Type</p>
+              <div className="flex gap-2 flex-wrap">
+                {["ALL", "CCS2", "CHAdeMO", "Type2"].map(type => (
+                  <button
+                    key={type}
+                    onClick={() => setChargerTypeFilter(type)}
+                    className={`px-4 py-1.5 rounded-full text-sm font-medium
+                transition-all
+                ${chargerTypeFilter === type
+                        ? "bg-emerald-500 text-white shadow"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-      {/* ================= MAP ================= */}
+            {/* Power Slider */}
+            <div className="min-w-[220px]">
+              <p className="text-xs text-gray-500 mb-1">
+                Minimum Power: <span className="font-semibold text-emerald-600">
+                  {minPowerFilter} kW+
+                </span>
+              </p>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={10}
+                value={minPowerFilter}
+                onChange={(e) => setMinPowerFilter(Number(e.target.value))}
+                className="w-full accent-emerald-500"
+              />
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+
+
+      <div className="max-w-4xl mx-auto mt-10 px-6 text-center">
+        <p className="text-lg text-gray-700 leading-relaxed">
+          Discover reliable <span className="font-semibold text-emerald-600">EV charging stations</span>
+          near you with ease.
+          Search any location to instantly view nearby stations, compare availability,
+          and book your charging slot — all in one place.
+        </p>
+
+        <p className="mt-3 text-sm text-gray-500">
+          Smart routing • Real-time availability • Hassle-free booking
+        </p>
+      </div>
+
+
       <div className="max-w-6xl mx-auto mt-14 px-4">
         <div className="h-[65vh] bg-white rounded-[32px]
                         shadow-[0_30px_80px_rgba(0,0,0,0.25)]
@@ -231,7 +333,7 @@ export default function StationFinder() {
         </div>
       </div>
 
-      {/* ================= STATIONS ================= */}
+
       <div className="max-w-6xl mx-auto mt-10 px-4">
         <div className="flex justify-between items-center mb-5">
           <h2 className="text-xl font-bold text-emerald-600">
@@ -250,18 +352,62 @@ export default function StationFinder() {
               className="min-w-[320px] snap-start"
               onClick={() => setSelectedStation(st)}
             >
-              <StationCard station={st} />
+              <StationCard
+                station={st}
+                onSelectCharger={setSelectedCharger}
+              />
             </div>
           ))}
         </div>
       </div>
+      {showPayment && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-3xl w-full max-w-sm">
 
-      {/* ================= BOOKING MODAL ================= */}
+            <h3 className="text-xl font-bold text-emerald-700">
+              Payment
+            </h3>
+
+            <p className="mt-3 text-gray-600">
+              Booking Fee: <strong>LKR 300</strong>
+            </p>
+
+            <p className="text-sm text-gray-500 mt-1">
+              This fee confirms your charging slot.
+            </p>
+
+            <button
+              onClick={async () => {
+
+                await createBooking();
+                await confirmPayment();
+                setShowPayment(false);
+              }}
+              className="mt-6 w-full bg-emerald-500 text-white py-3 rounded-xl font-semibold"
+            >
+              Pay & Confirm
+            </button>
+
+            <button
+              onClick={() => setShowPayment(false)}
+              className="mt-3 w-full bg-gray-200 py-2 rounded-xl"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+
       {selectedStation && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm
                         flex items-center justify-center z-50 px-4">
           <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md">
-            <StationCard station={selectedStation} />
+            <StationCard
+              station={selectedStation}
+              selectedCharger={selectedCharger}
+              onSelectCharger={setSelectedCharger}
+            />
 
             <h3 className="text-xl font-bold text-emerald-700 mt-4">
               Book Charging Slot
@@ -295,9 +441,8 @@ export default function StationFinder() {
 
             {availability !== null && (
               <p
-                className={`mt-3 font-bold ${
-                  availability ? "text-green-600" : "text-red-600"
-                }`}
+                className={`mt-3 font-bold ${availability ? "text-green-600" : "text-red-600"
+                  }`}
               >
                 {availability ? "Slot available ✔" : "Slot unavailable ✖"}
               </p>
@@ -311,10 +456,26 @@ export default function StationFinder() {
                 Check
               </button>
               <button
-                onClick={createBooking}
-                className="flex-1 bg-black text-white py-2 rounded-xl"
+                disabled={!selectedCharger || availability !== true}
+                onClick={() => {
+                  alert(duration);
+                  navigate("/payments", {
+                    state: {
+                      type: "BOOKING",
+                      bill: 300,
+                      booking: {
+                        userId,
+                        chargerId: selectedCharger.id,
+                        date: bookingDate.toISOString().split("T")[0],
+                        startTime: bookingTime,
+                        duration: duration,
+                      },
+                    },
+                  });
+                }}
+                className="flex-1 bg-emerald-500 text-white py-2 rounded-xl"
               >
-                Book
+                Proceed to Payment
               </button>
             </div>
 

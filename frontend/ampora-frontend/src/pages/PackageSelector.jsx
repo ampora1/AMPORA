@@ -121,7 +121,7 @@ export default function PackageSelector() {
 
         return_url: "http://localhost:5173/payment-success",
         cancel_url: "http://localhost:5173/package",
-        notify_url: "http://localhost:8083/api/payment/payhere/notify",
+        notify_url: "https://762b0fdf374e.ngrok-free.app/api/payment/payhere/notify",
 
         order_id: orderId,
         items: pkg.name,

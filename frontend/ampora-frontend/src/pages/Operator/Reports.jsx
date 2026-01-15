@@ -308,7 +308,7 @@ const [editDescription, setEditDescription] = useState(report.description);
         </span>
       </div>
 
-      <p className="text-sm text-slate-600">{report.description}</p>
+      
 
       {/* FIXED BUTTON */}
      <div className="flex gap-3 mt-3">

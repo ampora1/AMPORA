@@ -7,10 +7,7 @@ from typing import Optional, List, Dict, Any
 import pandas as pd
 from dotenv import load_dotenv
 
-# =========================================================
-# ✅ CRITICAL: function must exist BEFORE joblib.load() runs
-# because your saved model references __main__.transform_features
-# =========================================================
+
 def transform_features(X_df: pd.DataFrame) -> pd.DataFrame:
     X_copy = X_df.copy()
 
@@ -45,26 +42,26 @@ def transform_features(X_df: pd.DataFrame) -> pd.DataFrame:
     return X_copy.drop(["time", "day", "month", "user_type"], axis=1)
 
 
-# ✅ Bind into __main__ so pickle can resolve __main__.transform_features
-import __main__  # noqa: E402
+
+import __main__  
 __main__.transform_features = transform_features
 
-# ✅ Load .env early
+
 load_dotenv()
 
-from fastapi import FastAPI  # noqa: E402
-from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
-from pydantic import BaseModel, Field  # noqa: E402
+from fastapi import FastAPI  
+from fastapi.middleware.cors import CORSMiddleware  
+from pydantic import BaseModel, Field 
 
-from groq import Groq  # noqa: E402
-from psycopg2.extras import RealDictCursor  # noqa: E402
+from groq import Groq  
+from psycopg2.extras import RealDictCursor  
 
-from database import get_db_connection  # noqa: E402
-from distance_time import analyze_stations_logic  # noqa: E402
-from ml_predictor import load_model, predict_activities  # noqa: E402
+from database import get_db_connection  
+from distance_time import analyze_stations_logic  
+from ml_predictor import load_model, predict_activities  
 
 
-# ✅ Load ML model AFTER transform_features exists
+
 try:
     load_model()
 except Exception as e:
@@ -76,23 +73,19 @@ groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # later restrict to your frontend domain
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# -----------------------
-# Chat memory per trip
-# -----------------------
+
 CHAT_STORE: Dict[str, Dict[str, Any]] = {}
 # { conversation_id: { "messages": [{"role":"user/ai","text":"..."}], "user_type": "Tourist" } }
 
 APP_USER_TYPES = ["Delivery_Driver", "Business_Man", "Casual_Driver", "Tourist"]
 
-# -----------------------
-# Request/Response models
-# -----------------------
+
 class Station(BaseModel):
     name: str
     lat: float
@@ -125,9 +118,7 @@ class ChatResponse(BaseModel):
     sorted_stations: List[dict] = []
 
 
-# -----------------------
-# Helpers
-# -----------------------
+
 def get_origin(req: ChatRequest):
     if req.start_lat is not None and req.start_lng is not None:
         return (req.start_lat, req.start_lng)
@@ -293,20 +284,18 @@ async def get_nearby_stations(req: NearbyStationsRequest):
         conn.close()
 
 
-# -----------------------
-# Endpoint: chat
-# -----------------------
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
     try:
-        # Init memory
+       
         if req.conversation_id not in CHAT_STORE:
             CHAT_STORE[req.conversation_id] = {"messages": [], "user_type": None}
 
         store = CHAT_STORE[req.conversation_id]
         store["messages"].append({"role": "user", "text": req.user_text})
 
-        # Infer / update user type (LLM)
+       
         if not store["user_type"]:
             store["user_type"] = infer_user_type_llm(
                 req.user_text, store["messages"], req.start_city, req.end_city

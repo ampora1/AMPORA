@@ -54,7 +54,24 @@ function decodePolyline(encoded) {
   return points;
 }
 
+/* ================= EV HELPERS ================= */
 
+function usableEnergyKwh(batteryPct, batteryKwh, degradation = 0) {
+  return (batteryPct / 100) * batteryKwh * (1 - degradation / 100) * 0.9;
+}
+
+function requiredEnergyKwh(distanceKm, consumption) {
+  return distanceKm * consumption;
+}
+
+function chargingTimeMinutes(energyKwh, powerKw) {
+  return Math.ceil((energyKwh / powerKw) * 60);
+}
+
+function terrainFactor(distanceKm) {
+  if (distanceKm > 150) return 1.15; // hill country
+  return 1.0;
+}
 /* ================= COMPONENT ================= */
 export default function TripPlanner() {
   const isLoggedIn = Boolean(localStorage.getItem("token"));
@@ -63,56 +80,56 @@ export default function TripPlanner() {
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries: ["places"],
   });
-const [chatOpen, setChatOpen] = useState(false);
-const [chatInput, setChatInput] = useState("");
-const [chatMessages, setChatMessages] = useState([]);
-async function sendChatMessage() {
-  if (!chatInput.trim()) return;
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+  async function sendChatMessage() {
+    if (!chatInput.trim()) return;
 
-  const userMessage = chatInput;
+    const userMessage = chatInput;
 
-  // show user message immediately
-  setChatMessages(prev => [
-    ...prev,
-    { role: "user", text: userMessage }
-  ]);
-  setChatInput("");
-
-  try {
-    const res = await fetch("http://127.0.0.1:8001/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        conversation_id: conversationIdRef.current,
-        start_city: startText,
-        end_city: endText,
-        soc_level: batteryPct,
-        user_text: userMessage,
-        stations: stations.map(s => ({
-          name: s.name,
-          lat: s.lat,
-          lng: s.lon,
-          address: s.address,
-          status: s.status
-        }))
-      })
-    });
-
-    const data = await res.json();
-
+    // show user message immediately
     setChatMessages(prev => [
       ...prev,
-      { role: "ai", text: data.assistant_text }
+      { role: "user", text: userMessage }
     ]);
-  } catch (err) {
-    setChatMessages(prev => [
-      ...prev,
-      { role: "ai", text: "⚠️ Unable to reach assistant right now." }
-    ]);
+    setChatInput("");
+
+    try {
+      const res = await fetch("http://127.0.0.1:8001/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversation_id: conversationIdRef.current,
+          start_city: startText,
+          end_city: endText,
+          soc_level: batteryPct,
+          user_text: userMessage,
+          stations: stations.map(s => ({
+            name: s.name,
+            lat: s.lat,
+            lng: s.lon,
+            address: s.address,
+            status: s.status
+          }))
+        })
+      });
+
+      const data = await res.json();
+
+      setChatMessages(prev => [
+        ...prev,
+        { role: "ai", text: data.assistant_text }
+      ]);
+    } catch (err) {
+      setChatMessages(prev => [
+        ...prev,
+        { role: "ai", text: "⚠️ Unable to reach assistant right now." }
+      ]);
+    }
   }
-}
 
-const conversationIdRef = useRef(`trip-${Date.now()}`);
+  const conversationIdRef = useRef(`trip-${Date.now()}`);
   const mapCenter = { lat: 7.8731, lng: 80.7718 };
   const [avoidHighways, setAvoidHighways] = useState(false);
   /* ===== START / END ===== */
@@ -213,55 +230,102 @@ const conversationIdRef = useRef(`trip-${Date.now()}`);
 
 
   function evaluateTrip(route, stations) {
-    if (!selectedVehicle) {
-      setTripStatus({ ok: false, msg: "Select a vehicle first" });
-      return;
-    }
+  if (!selectedVehicle) {
+    setTripStatus({ ok: false, msg: "Select a vehicle first" });
+    return;
+  }
 
-    const fullRangeKm = selectedVehicle.rangeKm;
-    const availableKm = (batteryPct / 100) * fullRangeKm;
+  /* ---------------- VEHICLE DATA ---------------- */
+  const batteryKwh = selectedVehicle.batteryKwh ?? 60;
+  const consumption = selectedVehicle.consumptionKwhPerKm ?? 0.18;
 
+  /* ---------------- ROUTE DATA ---------------- */
+  const routeDistanceKm = route.legs[0].distance.value / 1000;
 
-    const routeDistanceKm = route.legs[0].distance.value / 1000;
+  /* ---------------- INITIAL STATE ---------------- */
+  let currentEnergy =
+    (batteryPct / 100) * batteryKwh * 0.9; // 10% safety buffer
+  let currentPositionKm = 0;
 
+  const orderedStations = [...stations].sort(
+    (a, b) => a.distanceFromStartKm - b.distanceFromStartKm
+  );
 
-    if (stations.length === 0) {
-      if (availableKm >= routeDistanceKm) {
-        setTripStatus({
-          ok: true,
-          msg: "Trip possible without charging",
-        });
-      } else {
-        setTripStatus({
-          ok: false,
-          msg: `Trip NOT possible. Need ${routeDistanceKm.toFixed(
-            1
-          )} km but only ${availableKm.toFixed(1)} km available.`,
-        });
-      }
-      return;
-    }
+  let remainingStations = [...orderedStations];
+  const chargePlan = [];
 
+  /* ================= MAIN LOOP ================= */
+  while (true) {
+    /* ---- Can we reach destination directly? ---- */
+    const remainingKm = routeDistanceKm - currentPositionKm;
+    const energyToDestination = remainingKm * consumption;
 
-    const firstStation = stations[0];
-
-
-    const distanceToFirstStationKm = firstStation.distanceFromStartKm;
-
-    if (availableKm >= distanceToFirstStationKm) {
+    if (energyToDestination <= currentEnergy) {
       setTripStatus({
         ok: true,
-        msg: "Trip possible (can reach first charging station)",
+        msg:
+          chargePlan.length === 0
+            ? "Trip possible without charging"
+            : `Trip possible with ${chargePlan.length} charging stop(s)`,
+        chargePlan,
       });
-    } else {
+      return;
+    }
+
+    /* ---- Find all reachable stations ahead ---- */
+    const reachableStations = remainingStations.filter(s => {
+      const kmToStation = s.distanceFromStartKm - currentPositionKm;
+      return (
+        kmToStation > 0 &&
+        kmToStation * consumption <= currentEnergy
+      );
+    });
+
+    /* ---- No reachable station = REAL FAILURE ---- */
+    if (reachableStations.length === 0) {
       setTripStatus({
         ok: false,
-        msg: `Trip NOT possible. Cannot reach first charging station (${distanceToFirstStationKm.toFixed(
-          1
-        )} km). Available range is ${availableKm.toFixed(1)} km.`,
+        msg:
+          currentPositionKm === 0
+            ? "Cannot reach any charging station with the current battery level."
+            : "Cannot reach the next charging station from the last stop.",
       });
+      return;
     }
+
+    /* ---- Pick BEST reachable station ---- */
+    const nextStation = reachableStations.sort(
+      (a, b) => b.powerKw - a.powerKw
+    )[0];
+
+    /* ---- Travel to station ---- */
+    const travelKm =
+      nextStation.distanceFromStartKm - currentPositionKm;
+
+    currentEnergy -= travelKm * consumption;
+    currentPositionKm = nextStation.distanceFromStartKm;
+
+    /* ---- Charge (assume full charge) ---- */
+    const energyToFull = batteryKwh - currentEnergy;
+    const minutes = Math.ceil(
+      (energyToFull / nextStation.powerKw) * 60
+    );
+
+    chargePlan.push({
+      station: nextStation.name,
+      minutes,
+    });
+
+    currentEnergy = batteryKwh * 0.9;
+
+    /* ---- Remove passed stations ---- */
+    remainingStations = remainingStations.filter(
+      s => s.distanceFromStartKm > currentPositionKm
+    );
   }
+}
+
+
 
 
 
@@ -518,62 +582,61 @@ const conversationIdRef = useRef(`trip-${Date.now()}`);
 
 
 
-<button
-  onClick={() => setChatOpen(true)}
-  className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-emerald-500 text-white shadow-xl flex items-center justify-center hover:scale-105 transition"
->
-  💬
-</button>
-<AnimatePresence>
-  {chatOpen && (
-    <motion.div
-      initial={{ x: 400 }}
-      animate={{ x: 0 }}
-      exit={{ x: 400 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="fixed bottom-0 right-0 z-50 w-[360px] h-[500px] bg-white rounded-l-3xl shadow-2xl flex flex-col"
-    >
-      {/* Header */}
-      <div className="p-4 bg-emerald-500 text-white rounded-tl-3xl flex justify-between items-center">
-        <h3 className="font-semibold">AMPORA Assistant ⚡</h3>
-        <button onClick={() => setChatOpen(false)}>✕</button>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#edffff]">
-        {chatMessages.map((m, i) => (
-          <div
-            key={i}
-            className={`max-w-[80%] p-3 rounded-2xl text-sm ${
-              m.role === "user"
-                ? "ml-auto bg-emerald-500 text-white"
-                : "mr-auto bg-white shadow"
-            }`}
+      <button
+        onClick={() => setChatOpen(true)}
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-emerald-500 text-white shadow-xl flex items-center justify-center hover:scale-105 transition"
+      >
+        💬
+      </button>
+      <AnimatePresence>
+        {chatOpen && (
+          <motion.div
+            initial={{ x: 400 }}
+            animate={{ x: 0 }}
+            exit={{ x: 400 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="fixed bottom-0 right-0 z-50 w-[360px] h-[500px] bg-white rounded-l-3xl shadow-2xl flex flex-col"
           >
-            {m.text}
-          </div>
-        ))}
-      </div>
+            {/* Header */}
+            <div className="p-4 bg-emerald-500 text-white rounded-tl-3xl flex justify-between items-center">
+              <h3 className="font-semibold">AMPORA Assistant ⚡</h3>
+              <button onClick={() => setChatOpen(false)}>✕</button>
+            </div>
 
-      {/* Input */}
-      <div className="p-3 border-t flex gap-2">
-        <input
-          value={chatInput}
-          onChange={e => setChatInput(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && sendChatMessage()}
-          placeholder="Ask about charging, food, route…"
-          className="flex-1 p-3 rounded-xl bg-[#edffff] outline-none"
-        />
-        <button
-          onClick={sendChatMessage}
-          className="px-4 rounded-xl bg-emerald-500 text-white font-semibold"
-        >
-          Send
-        </button>
-      </div>
-    </motion.div>
-  )}
-</AnimatePresence>
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#edffff]">
+              {chatMessages.map((m, i) => (
+                <div
+                  key={i}
+                  className={`max-w-[80%] p-3 rounded-2xl text-sm ${m.role === "user"
+                    ? "ml-auto bg-emerald-500 text-white"
+                    : "mr-auto bg-white shadow"
+                    }`}
+                >
+                  {m.text}
+                </div>
+              ))}
+            </div>
+
+            {/* Input */}
+            <div className="p-3 border-t flex gap-2">
+              <input
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && sendChatMessage()}
+                placeholder="Ask about charging, food, route…"
+                className="flex-1 p-3 rounded-xl bg-[#edffff] outline-none"
+              />
+              <button
+                onClick={sendChatMessage}
+                className="px-4 rounded-xl bg-emerald-500 text-white font-semibold"
+              >
+                Send
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

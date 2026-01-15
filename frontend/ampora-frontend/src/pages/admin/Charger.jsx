@@ -392,8 +392,9 @@ export default function ChargerPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
             >
               <option value="">Select type</option>
-              <option value="Slow">Slow</option>
-              <option value="Fast">Fast</option>
+              <option value="CCS2">CCS2</option>
+              <option value="CHAdeMO">CHAdeMO</option>
+              <option value="Type2">Type 2</option>
             </select>
           </div>
           <div>

@@ -15,7 +15,7 @@ export default function useChargingSocket() {
   const [billInfo, setBillInfo] = useState(null);
 
   useEffect(() => {
-    const WS_URL = "ws://192.168.148.79:8083/ws/charging";
+    const WS_URL = "ws://192.168.160.79:8083/ws/charging";
     wsRef.current = new WebSocket(WS_URL);
 
     wsRef.current.onopen = () => setConnected(true);
@@ -23,7 +23,7 @@ export default function useChargingSocket() {
     wsRef.current.onmessage = (event) => {
       const payload = JSON.parse(event.data);
 
-      /* 🔴 SESSION END */
+     
       if (payload.type === "SESSION_END") {
         console.log("Session ended", payload);
         setSessionEnded(true);
