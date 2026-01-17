@@ -14,6 +14,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register.jsx";
 import Forget from "./pages/Forget.jsx";
+import VerifyEmail from "./pages/EmailVerify.jsx";
 import Dashboard from "./pages/Dashboard";
 import TripPlanner from "./components/TripPlanner/TripPlanner.jsx";
 import StationFinder from "./pages/StationFinder.jsx";
@@ -54,12 +55,13 @@ import ChargerPage from "./pages/admin/Charger.jsx";
 // import Subscription from "./pages/admin/subscriptionService.jsx";
 import BookingStation from "./pages/admin/BookingStation.jsx";
 import PackageSelector from "./pages/PackageSelector.jsx";
+import EmailVerify from "./pages/EmailVerify.jsx";
 
 
 function AppLayout() {
   const { pathname } = useLocation();
 
-  const authPages = ["/login", "/register", "/forget"];
+  const authPages = ["/login", "/register", "/forget", "/verify-email"];
   const isAuthPage = authPages.includes(pathname);
   const isOperatorPage = pathname.startsWith("/operator");
   const isAdminPage = pathname.startsWith("/admin");
@@ -81,6 +83,8 @@ function AppLayout() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forget" element={<Forget />} />
+          <Route path="/verify-email" element={<EmailVerify />} />
+         
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/trip" element={<TripPlanner />} />
           <Route path="/stations" element={<StationFinder />} />
