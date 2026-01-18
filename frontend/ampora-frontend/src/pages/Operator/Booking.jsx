@@ -57,10 +57,10 @@ export default function Bookings() {
   const [bookings] = useState(initialBookings);
 
   return (
-    <div className="min-h-screen pt-24 px-6 pb-24 bg-gradient-to-br from-white via-sky-50 to-emerald-50">
+    <div className="min-h-screen   w-screen  pt-24 px-6 pb-24 bg-gradient-to-br from-white via-sky-50 to-emerald-50">
 
       {/* PAGE TITLE */}
-      <div className="max-w-6xl mx-auto mb-6">
+      <div className="w-full mx-auto mb-6">
         <h1 className="text-2xl font-semibold text-slate-800 flex items-center gap-2">
           <CalendarIcon className="w-7 h-7 text-emerald-700" />
           Station Bookings

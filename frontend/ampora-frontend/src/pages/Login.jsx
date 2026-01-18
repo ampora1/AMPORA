@@ -1,3 +1,6 @@
+
+
+
 import React, { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { Link } from "react-router-dom";
@@ -29,8 +32,13 @@ export default function Login() {
       const data = await res.json();
       localStorage.setItem("token", data.token);
       localStorage.setItem("userId", data.user_id);
-
-      window.location.href = "/user-dashboard";
+      if(data.role == "ADMIN"){
+        window.location.href = "/admin";
+      }else if(data.role == "OPERATOR"){
+        window.location.href = "/operator";
+      }else if(data.role == "USER"){
+        window.location.href = "/user-dashboard";
+      }
     } catch (err) {
       setError("Invalid email or password");
     } finally {
@@ -63,12 +71,12 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen w-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-white flex items-center justify-center px-4">
+    <div className="h-[100vh] w-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-white flex items-center justify-center px-4">
 
-      <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
+      <div className="w-full h-[80vh]  max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
 
         {/* ================= LEFT IMAGE ================= */}
-        <div className="hidden md:block relative">
+        <div className="hidden h-[80vh] md:block relative">
           <img
             src={Loginimg}
             alt="Ampora Login"
@@ -142,7 +150,7 @@ export default function Login() {
                 <input type="checkbox" />
                 Remember me
               </label>
-              <Link to="/forgot" className="text-emerald-600 hover:underline">
+              <Link to="/forget" className="text-emerald-600 hover:underline">
                 Forgot password?
               </Link>
             </div>
