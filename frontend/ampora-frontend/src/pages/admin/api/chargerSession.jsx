@@ -1,6 +1,4 @@
-const BASE_URL =
-  import.meta.env.VITE_CHARGERSESSION_API_URL ||
-  "http://localhost:8083/api/chargersession";
+const BASE_URL = "http://34.14.149.31:8083/api/chargersession";
 
 async function handleResponse(res) {
   if (!res.ok) {
