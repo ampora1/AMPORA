@@ -61,8 +61,8 @@ import VerifyOtp from "./pages/VerifyOtp.jsx";
 function AppLayout() {
   const { pathname } = useLocation();
 
-  const authPages = ["/login", "/register", "/forget", "/verify-email"];
-  const isAuthPage = authPages.includes(pathname) || pathname.startsWith("/verify-otp/");
+  const authPages = ["/login", "/register", "/forget", "/verify-email", "/verify-otp"];
+  const isAuthPage = authPages.includes(pathname);
   const isOperatorPage = pathname.startsWith("/operator");
   const isAdminPage = pathname.startsWith("/admin");
 
@@ -84,7 +84,7 @@ function AppLayout() {
           <Route path="/register" element={<Register />} />
           <Route path="/forget" element={<Forget />} />
           <Route path="/verify-email" element={<EmailVerify />} />
-          <Route path="/verify-otp/:id" element={<VerifyOtp />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
 
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/trip" element={<TripPlanner />} />
@@ -140,6 +140,8 @@ function AppLayout() {
     </>
   );
 }
+
+
 
 export default function App() {
   return (

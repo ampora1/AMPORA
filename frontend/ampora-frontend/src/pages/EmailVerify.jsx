@@ -45,7 +45,7 @@ export default function EmailVerify({ onNext }) {
           </h2>
           <div className="flex justify-center items-center ">
           <p className="text-gray-600 mb-9 text-center font-normal">
-          Enter your user account's verified email address and we will sent your a password reset link
+          Enter your user account's verified email address and we will send your a password reset link
           </p>
           </div>
 
