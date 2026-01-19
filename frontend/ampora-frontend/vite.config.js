@@ -5,6 +5,6 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
 
-  // REQUIRED for GitHub Pages (repo name)
-  base: "/ampora-frontend/"
+  // MUST match REPO NAME (not folder name)
+  base: "/AMPORA/"
 });
