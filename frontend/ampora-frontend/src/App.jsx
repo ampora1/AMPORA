@@ -138,8 +138,8 @@ function AppLayout() {
 
 export default function App() {
   return (
-    <Router>
+  
       <AppLayout />
-    </Router>
+  
   );
 }
