@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 
 export default function SessionEndModal({ billInfo, onClose }) {
   const navigate = useNavigate();
+const userId = localStorage.getItem("userId");
+  if (!billInfo) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
@@ -16,25 +18,37 @@ export default function SessionEndModal({ billInfo, onClose }) {
         </h2>
 
         <div className="space-y-2 text-sm">
-          <p>Energy Used: <b>{billInfo.energy.toFixed(3)} kWh</b></p>
+          <p>
+            Energy Used:{" "}
+            <b>{billInfo.energy?.toFixed(3) ?? "0.000"} kWh</b>
+          </p>
           <p className="text-lg">
-            Total Bill: <b>LKR {billInfo.bill.toFixed(2)}</b>
+            Total Bill:{" "}
+            <b>LKR {billInfo.bill?.toFixed(2) ?? "0.00"}</b>
           </p>
         </div>
 
         <div className="flex gap-3 mt-6">
           <button
-            onClick={() =>
-              navigate("/payments", { state: billInfo })
-            }
-            className="flex-1 bg-emerald-600 text-white py-2 rounded-lg font-semibold"
+            onClick={() => navigate("/payments", { 
+              state: {
+                type: "CHARGING",
+                energy: billInfo.energy,
+                bill: billInfo.bill,
+                payload:{
+                  userId: userId,
+                  sessionId: billInfo.sessionId,
+                  energy: billInfo.energy,
+                }
+} })}
+            className="flex-1 bg-emerald-600 text-white py-2 rounded-lg font-semibold hover:bg-emerald-700 transition"
           >
             Pay Now
           </button>
 
           <button
             onClick={onClose}
-            className="flex-1 border py-2 rounded-lg"
+            className="flex-1 border py-2 rounded-lg hover:bg-gray-100 transition"
           >
             Later
           </button>

@@ -434,6 +434,7 @@ export default function StationFinder() {
               value={duration}
               onChange={(e) => setDuration(Number(e.target.value))}
             >
+              <option >Select Time slot</option>
               <option value={1}>1 hour</option>
               <option value={2}>2 hours</option>
               <option value={3}>3 hours</option>
@@ -457,22 +458,68 @@ export default function StationFinder() {
               </button>
               <button
                 disabled={!selectedCharger || availability !== true}
-                onClick={() => {
-                  alert(duration);
-                  navigate("/payments", {
-                    state: {
-                      type: "BOOKING",
-                      bill: 300,
-                      booking: {
-                        userId,
-                        chargerId: selectedCharger.id,
-                        date: bookingDate.toISOString().split("T")[0],
-                        startTime: bookingTime,
-                        duration: duration,
+                onClick={async () => {
+                  if (!bookingDate || !bookingTime || !selectedCharger) {
+                    alert("Please select date, time, and charger");
+                    return;
+                  }
+                  const [hh, mm] = bookingTime.split(":").map(Number);
+
+                  const start = new Date();
+                  start.setHours(hh, mm, 0, 0);
+
+                  const end = new Date(start);
+                  end.setHours(end.getHours() + duration);
+
+                  const endTime = end.toTimeString().slice(0, 5);
+                  try {
+                    console.log("Creating pending booking...");
+
+                    const res = await fetch(
+                      "http://localhost:8083/api/payment/pending",
+                      {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          userId,
+                          chargerId: selectedCharger.id,
+                          date: bookingDate.toISOString().split("T")[0],
+                          startTime: bookingTime,
+                          endTime: endTime,
+                          duration: duration,
+                          amount: 300,
+                        }),
+                      }
+                    );
+
+                    if (!res.ok) {
+                      const errText = await res.text();
+                      console.error("Pending booking failed:", errText);
+                      alert("Booking creation failed");
+                      return;
+                    }
+
+                    const data = await res.json();
+                    console.log("Pending booking response:", data);
+
+                    if (!data.bookingId) {
+                      alert("Booking ID not returned");
+                      return;
+                    }
+
+                    navigate("/payments", {
+                      state: {
+                        bookingId: data.bookingId,
+                        bill: 300,
                       },
-                    },
-                  });
+                    });
+
+                  } catch (err) {
+                    console.error("Pending booking error:", err);
+                    alert("Something went wrong");
+                  }
                 }}
+
                 className="flex-1 bg-emerald-500 text-white py-2 rounded-xl"
               >
                 Proceed to Payment
