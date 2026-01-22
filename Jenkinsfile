@@ -15,7 +15,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'numidu',
+                git branch: 'main',
                     url: 'https://github.com/ampora1/ampora.git'
             }
         }
