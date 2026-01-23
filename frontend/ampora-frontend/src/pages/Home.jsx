@@ -14,15 +14,15 @@ const Home = () => {
   return (
     <div className="w-full min-h-screen bg-[#EDFFFF] overflow-x-hidden">
 
-      {/* HERO */}
+     
       <HeroSection />
 
-      {/* DIVIDER */}
+     
       <div className="relative w-full flex justify-center mt-10">
         <div className="electric-line" />
       </div>
 
-      {/* FEATURES */}
+     
       <motion.div
         variants={fadeUp}
         initial="hidden"

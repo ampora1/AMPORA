@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Reg from "../assets/Reg.jpg";
 
-const API = "http://localhost:8083";
+const API = "http://13.211.243.202:8083";
 
 export default function Register() {
   const navigate = useNavigate();

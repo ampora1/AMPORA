@@ -1,5 +1,5 @@
 const BASE_URL =
-  import.meta.env.VITE_VEHICLE_API_URL || "http://34.14.149.31:8083/api/vehicles";
+  import.meta.env.VITE_VEHICLE_API_URL || "http://13.211.243.202:8083/api/vehicles";
 
 async function handleResponse(res) {
   if (!res.ok) {

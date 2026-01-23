@@ -1,6 +1,6 @@
 const BASE_URL =
   import.meta.env.VITE_STATION_API_URL ||
-  "http://34.14.149.31:8083/api/stations";
+  "http://13.211.243.202:8083/api/stations";
 
 async function handleResponse(res) {
   if (!res.ok) {

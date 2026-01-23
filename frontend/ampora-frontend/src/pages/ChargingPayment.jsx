@@ -1,7 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { useState } from "react";
 
-const BACKEND = "http://localhost:8083";
+const BACKEND = "http://13.211.243.202:8083";
 
 export default function ChargingPayment() {
   const { state } = useLocation();
@@ -36,10 +36,10 @@ export default function ChargingPayment() {
 
     const fields = {
       merchant_id: data.merchantId,
-      return_url: "http://localhost:5173/payment-success",
-      cancel_url: "http://localhost:5173/payment-cancel",
+      return_url: "http://15.134.60.252/payment-success",
+      cancel_url: "http://15.134.60.252/payment-cancel",
       notify_url:
-        "https://6d3fe76cf357.ngrok-free.app/api/payment/payhere/charging-notify",
+        "http://13.211.243.202:8083/api/payment/payhere/charging-notify",
 
       order_id: orderId,
       items: "EV Charging Session Payment",

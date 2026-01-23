@@ -3,7 +3,7 @@ import { FiZap, FiShield, FiLayers } from "react-icons/fi";
 
 const KWH_RATE = 85;
 
-// TODO: Replace with real logged-in user id from auth context / JWT
+
 const LOGGED_USER_ID = "USER_123";
 
 export const EV_PACKAGES = [
@@ -91,7 +91,7 @@ export default function PackageSelector() {
 
       // 1️⃣ Request secure hash
       const res = await fetch(
-        "http://localhost:8083/api/payment/payhere/hash",
+        "http://13.211.243.202:8083/api/payment/payhere/hash",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -119,9 +119,9 @@ export default function PackageSelector() {
       const fields = {
         merchant_id: data.merchantId,
 
-        return_url: "http://localhost:5173/payment-success",
-        cancel_url: "http://localhost:5173/package",
-        notify_url: "https://762b0fdf374e.ngrok-free.app/api/payment/payhere/notify",
+        return_url: "http://15.134.60.252/payment-success",
+        cancel_url: "http://15.134.60.252/package",
+        notify_url: "http://13.211.243.202:8083/api/payment/payhere/notify",
 
         order_id: orderId,
         items: pkg.name,
