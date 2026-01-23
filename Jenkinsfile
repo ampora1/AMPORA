@@ -24,7 +24,7 @@ pipeline {
                         ssh -o StrictHostKeyChecking=no ubuntu@15.134.60.252 "
                           set -e
                           cd /home/ubuntu/AMPORA
-                          git pull origin numidu
+                          git pull origin main
                           export VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
                           docker compose up -d --build
                         "
