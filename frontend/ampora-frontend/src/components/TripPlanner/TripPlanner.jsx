@@ -77,7 +77,7 @@ export default function TripPlanner() {
   const isLoggedIn = Boolean(localStorage.getItem("token"));
   const userId = localStorage.getItem("userId");
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: "AIzaSyDgg91f6DBk5-6ugJ2i684WkRuyq5w5rcM",
     libraries: ["places"],
   });
   const [chatOpen, setChatOpen] = useState(false);
