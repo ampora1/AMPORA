@@ -12,7 +12,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE = "http://13.211.243.202:8083/";
+const API_BASE = "http://13.211.243.202:8083";
 const RADIUS_KM = 10;
 
 /* ================= DISTANCE ================= */
