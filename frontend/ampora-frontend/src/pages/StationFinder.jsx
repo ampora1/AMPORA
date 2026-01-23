@@ -248,7 +248,7 @@ export default function StationFinder() {
         </div>
       </div>
       {/* ================= FILTER BAR ================= */}
-      <div className="sticky top-4 z-20 mt-6">
+      <div className="sticky top-10 z-20 mt-6">
         <div className="max-w-6xl mx-auto px-4">
           <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-lg
                     px-6 py-4 flex flex-col md:flex-row
