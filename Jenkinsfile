@@ -16,22 +16,26 @@ pipeline {
             }
         }
 
-        stage('Deploy to EC2') {
-            steps {
-                sshagent(['ec2-key']) {
-                    withCredentials([string(credentialsId: 'VITE_GOOGLE_MAPS_API_KEY', variable: 'VITE_GOOGLE_MAPS_API_KEY')]) {
-                        sh '''
-                        ssh -o StrictHostKeyChecking=no ubuntu@15.134.60.252 "
-                          set -e
-                          cd /home/ubuntu/AMPORA
-                          git pull origin main
-                          export VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
-                          docker compose up -d --build
-                        "
-                        '''
-                    }
-                }
+    stage('Deploy to EC2') {
+    steps {
+        sshagent(['ec2-key']) {
+            withCredentials([
+                string(credentialsId: 'VITE_GOOGLE_MAPS_API_KEY',
+                       variable: 'VITE_GOOGLE_MAPS_API_KEY')
+            ]) {
+                sh '''
+                ssh -o StrictHostKeyChecking=no ubuntu@15.134.60.252 "
+                  set -e
+                  cd /home/ubuntu/AMPORA
+                  git pull origin main --rebase --autostash
+                  export VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
+                  docker compose up -d --build
+                "
+                '''
             }
         }
+    }
+}
+
     }
 }
