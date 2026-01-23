@@ -209,7 +209,7 @@ export default function StationFinder() {
     <div className="w-screen bg-teal-100 pb-20">
 
 
-      <div className="relative h-[34vh] rounded-b-[70px] overflow-hidden
+      <div className="relative lg:h-[34vh] h-[30vh] rounded-b-[70px] overflow-hidden
                       bg-gradient-to-tr from-teal-900 via-emerald-800 to-teal-700">
         <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 120">
           <path
@@ -219,7 +219,7 @@ export default function StationFinder() {
         </svg>
 
         <div className="relative h-full flex flex-col items-center justify-center text-center px-6">
-          <h1 className="text-5xl md:text-6xl font-extrabold text-white">
+          <h1 className="lg:text-5xl text-3xl md:text-6xl font-extrabold text-white">
             Find <span className="text-emerald-300">EV</span> Charging Stations
           </h1>
           <p className="mt-3 text-emerald-100 text-lg">
