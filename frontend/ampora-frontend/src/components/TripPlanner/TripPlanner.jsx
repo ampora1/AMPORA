@@ -476,7 +476,7 @@ export default function TripPlanner() {
 
             <button
               onClick={findRoutes}
-              className="rounded-2xl bg-emerald-500 text-white font-semibold shadow-md hover:scale-[1.02] transition"
+              className="rounded-2xl bg-emerald-500 text-white sm:h-[10vh] md:h-[10vh] font-semibold shadow-md hover:scale-[1.02] transition"
             >
               Find Routes
             </button>
