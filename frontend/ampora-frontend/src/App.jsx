@@ -54,6 +54,7 @@ import ChargerPage from "./pages/admin/Charger.jsx";
 // import Subscription from "./pages/admin/subscriptionService.jsx";
 import BookingStation from "./pages/admin/BookingStation.jsx";
 import PackageSelector from "./pages/PackageSelector.jsx";
+import ChargingPayment from "./pages/ChargingPayment.jsx";
 
 
 function AppLayout() {
@@ -97,6 +98,7 @@ function AppLayout() {
           <Route path="/help" element={<HelpSupport />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
            <Route path="/package" element={<PackageSelector />} />
+           <Route path="/charging-payment" element={<ChargingPayment />} />
 
           {/* ---------- OPERATOR ---------- */}
           <Route element={<OperatorLayout />}>

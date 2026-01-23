@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function SessionEndModal({ billInfo, onClose }) {
   const navigate = useNavigate();
-const userId = localStorage.getItem("userId");
+  const userId = localStorage.getItem("userId");
   if (!billInfo) return null;
 
   return (
@@ -30,21 +30,44 @@ const userId = localStorage.getItem("userId");
 
         <div className="flex gap-3 mt-6">
           <button
-            onClick={() => navigate("/payments", { 
-              state: {
-                type: "CHARGING",
-                energy: billInfo.energy,
-                bill: billInfo.bill,
-                payload:{
-                  userId: userId,
-                  sessionId: billInfo.sessionId,
-                  energy: billInfo.energy,
-                }
-} })}
-            className="flex-1 bg-emerald-600 text-white py-2 rounded-lg font-semibold hover:bg-emerald-700 transition"
-          >
-            Pay Now
-          </button>
+  onClick={async () => {
+    try {
+      const res = await fetch(
+        "http://localhost:8083/api/charging-payments/pending",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: "SESSION_ID_00000",
+            userId: userId,
+            energy: billInfo.energy,
+            amount: billInfo.bill,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        alert("Failed to create charging payment");
+        return;
+      }
+
+      const data = await res.json();
+
+      navigate("/charging-payment", {
+        state: {
+          chargingPaymentId: data.chargingPaymentId,
+          bill: billInfo.bill,
+        },
+      });
+
+    } catch (err) {
+      alert("Charging payment error");
+    }
+  }}
+  className="flex-1 bg-emerald-600 text-white py-2 rounded-lg font-semibold"
+>
+  Pay Now
+</button>
 
           <button
             onClick={onClose}
