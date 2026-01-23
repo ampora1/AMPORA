@@ -53,7 +53,7 @@ export default function StationFinder() {
   const userId = localStorage.getItem("userId");
 
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: "AIzaSyDgg91f6DBk5-6ugJ2i684WkRuyq5w5rcM",
+    googleMapsApiKey: "AIzaSyCGX_5oc5ijf_B-df9TT_zocjcc4-qfBRk",
     libraries: ["places"],
   });
 
