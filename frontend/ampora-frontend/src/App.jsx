@@ -137,11 +137,5 @@ function AppLayout() {
 }
 
 export default function App() {
-  return (
-  
-      <Routes>
-      <Route path="/*" element={<AppLayout />} />
-    </Routes>
-  
-  );
+  return <AppLayout />
 }
