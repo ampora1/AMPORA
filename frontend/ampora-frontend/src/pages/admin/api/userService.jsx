@@ -1,5 +1,5 @@
 const BASE_URL =
-  import.meta.env.VITE_USER_API_URL || "http://localhost:8083/api/users";
+  import.meta.env.VITE_USER_API_URL || "http://13.211.243.202:8083/api/userss";
 
 async function handleResponse(res) {
   if (!res.ok) {
@@ -24,7 +24,7 @@ export async function fetchUser() {
 }
 
 export async function createUser(user) {
-  const res = await fetch("http://localhost:8083/api/auth/register", {
+  const res = await fetch("http://13.211.243.202:8083/api/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(user),
