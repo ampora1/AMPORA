@@ -209,7 +209,7 @@ export default function StationFinder() {
     <div className="w-screen bg-teal-100 pb-20">
 
 
-      <div className="relative lg:h-[34vh] h-[30vh] rounded-b-[70px] overflow-hidden
+      <div className="relative lg:h-[34vh] h-[30vh] mt-5 lg:mt-0 rounded-b-[70px] overflow-hidden
                       bg-gradient-to-tr from-teal-900 via-emerald-800 to-teal-700">
         <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 120">
           <path
