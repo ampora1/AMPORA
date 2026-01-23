@@ -6,5 +6,5 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
 
   // REQUIRED for GitHub Pages (repo name)
-  base: "/",
+  base: "./",
 });
