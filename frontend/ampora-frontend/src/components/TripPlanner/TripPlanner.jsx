@@ -13,7 +13,7 @@ import {
 import PulsingMarker from "../PulsingMarker";
 import elec from "../../assets/bolt.png";
 
-const BACKEND = "http://localhost:8083";
+const BACKEND = "http://15.134.60.252";
 const USER_ID = "8d8c1937-efc4-4cbe-9d60-635bb4f47486";
 
 const containerStyle = { width: "100%", height: "100%" };
