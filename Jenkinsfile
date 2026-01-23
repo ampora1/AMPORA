@@ -12,7 +12,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/ampora1/Ampora.git'
+                    url: 'https://github.com/ampora1/AMPORA.git'
             }
         }
 
