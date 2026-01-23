@@ -16,7 +16,7 @@ pipeline {
             }
         }
 
-    stage('Deploy to EC2') {
+  stage('Deploy to EC2') {
     steps {
         sshagent(['ec2-key']) {
             withCredentials([
@@ -26,8 +26,16 @@ pipeline {
                 sh '''
                 ssh -o StrictHostKeyChecking=no ubuntu@15.134.60.252 "
                   set -e
+
+                  if [ ! -d /home/ubuntu/AMPORA ]; then
+                    git clone https://github.com/ampora1/AMPORA.git /home/ubuntu/AMPORA
+                  fi
+
                   cd /home/ubuntu/AMPORA
-                  git pull origin main --rebase --autostash
+                  git fetch origin
+                  git checkout main
+                  git reset --hard origin/main
+
                   export VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
                   docker compose up -d --build
                 "
@@ -36,6 +44,7 @@ pipeline {
         }
     }
 }
+
 
     }
 }
