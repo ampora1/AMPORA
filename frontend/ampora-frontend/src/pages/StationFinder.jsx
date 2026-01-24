@@ -476,7 +476,7 @@ export default function StationFinder() {
                     console.log("Creating pending booking...");
 
                     const res = await fetch(
-                      "http://localhost:8083/api/payment/pending",
+                      `${API_BASE}/api/payment/pending`,
                       {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
