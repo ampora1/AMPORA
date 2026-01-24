@@ -119,8 +119,8 @@ export default function PackageSelector() {
       const fields = {
         merchant_id: data.merchantId,
 
-        return_url: "http://15.134.60.252/payment-success",
-        cancel_url: "http://15.134.60.252/package",
+        return_url: "http://ampora.dev/payment-success",
+        cancel_url: "http://ampora.dev/package",
         notify_url: "http://13.211.243.202:8083/api/payment/payhere/notify",
 
         order_id: orderId,
