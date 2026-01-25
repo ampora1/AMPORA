@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Loading from "../components/Loading";
+import { Eye, EyeOff } from "lucide-react";
+
 
 export default function ForgetPassword() {
   const [password, setPassword] = useState("");
@@ -9,6 +11,9 @@ export default function ForgetPassword() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
 
  const handleSubmit = async (e) => {
   e.preventDefault();
@@ -61,20 +66,28 @@ export default function ForgetPassword() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5 ">
           {/* Password */}
-          <div className="text-left">
+          <div className="text-left relative">
            
             <input
-              type="password"
+               type={showPassword ? "text" : "password"}
                placeholder="Password"
               className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-400"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+
+             <button
+               type={showConfirmPassword ? "text" : "password"}
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-emerald-600"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
            
           </div>
 
           {/* Confirm Password */}
-          <div className="text-left">
+          <div className="text-left relative">
           
             <input
               type="password"
@@ -83,6 +96,14 @@ export default function ForgetPassword() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
+
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-emerald-600"
+            >
+              {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
             
           </div>
 

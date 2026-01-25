@@ -91,7 +91,7 @@ export default function Login() {
           </div>
         </div>
 
-        {/* ================= RIGHT FORM ================= */}
+       
         <div className="p-10 md:p-12 flex flex-col justify-center">
 
           <h1 className="text-3xl font-extrabold text-emerald-700">
@@ -101,14 +101,13 @@ export default function Login() {
             Sign in to continue your EV journey
           </p>
 
-          {/* ERROR */}
           {error && (
             <div className="mt-4 bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm">
               {error}
             </div>
           )}
 
-          {/* ================= GOOGLE ================= */}
+         
           <div className="mt-6">
             <GoogleLogin
               onSuccess={handleGoogleLogin}
@@ -124,7 +123,7 @@ export default function Login() {
             <hr className="flex-grow border-gray-300" />
           </div>
 
-          {/* ================= EMAIL FORM ================= */}
+         
           <form onSubmit={handleLogin} className="space-y-4">
 
             <input
