@@ -26,7 +26,7 @@ export default function EmailVerify({ onNext }) {
       if (!res.ok){
         setError("Invalid email");
       }else {
-        navigate(`/verify-otp/${data.object}`)
+        navigate(`/password-reset/verify-otp/${data.object}`)
       }
 
     
