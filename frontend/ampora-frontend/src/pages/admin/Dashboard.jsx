@@ -18,6 +18,7 @@ import {
 import SimpleRevenueChart from "./component/SimpleRevenueChart";
 import DashboardMap from "./component/DashboardMap";
 import TopStationsFromSessionsFetch from "./component/TopStationsStatic";
+import { fetchBokking } from "./api/bookingService";
 
 export default function Dashboard() {
   const [selectedPeriod] = useState("week");
@@ -28,7 +29,7 @@ export default function Dashboard() {
   const [activesessions, setActiveSessions] = useState(0);
   const [users, setUsers] = useState(0);
   const [revenue, setRevenue] = useState(0);
-  const [sessions, setSessions] = useState([]);
+  const [bookings, setBookings] = useState([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -36,14 +37,15 @@ export default function Dashboard() {
       try {
         const response = await fetchStations();
         setStations(response.length);
-        const sessions = await fetchSessions();
-        setSessions(sessions);
-        const activeSessionsCount = sessions.filter(
-          (session) => session.sessionStatus === "ONGOING"
+        const bookings = await fetchBokking();
+        setBookings(bookings);
+        const activeBookingCount = bookings.filter(
+          (booking) =>
+            booking.status === "PENDING" || booking.status === "ACTIVE",
         ).length;
-        setActiveSessions(activeSessionsCount);
-        const revenueData = sessions.reduce((total, session) => {
-          return total + (session.cost || 0);
+        setActiveSessions(activeBookingCount);
+        const revenueData = bookings.reduce((total, booking) => {
+          return total + (booking.amount || 0);
         }, 0);
         setRevenue(revenueData);
         const usersData = await fetchUser();
@@ -88,7 +90,7 @@ export default function Dashboard() {
         color: "from-teal-400 to-teal-500",
       },
     ],
-    [activesessions, users, stations]
+    [activesessions, users, stations, revenue],
   );
 
   const actions = useMemo(
@@ -135,7 +137,7 @@ export default function Dashboard() {
           navigate("/admin/vehicle", { state: { openAddModal: true } }),
       },
     ],
-    []
+    [],
   );
 
   return (
@@ -227,11 +229,11 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 ">
           <div className="bg-white rounded-2xl p-6 shadow min-w-0">
-            <SimpleRevenueChart sessions={sessions} />
+            <SimpleRevenueChart booking={bookings} />
           </div>
 
           <div className="bg-white rounded-2xl p-6 shadow-lg min-w-0">
-            <TopStationsFromSessionsFetch sessions={sessions} topN={5} />
+            <TopStationsFromSessionsFetch booking={bookings} topN={5} />
           </div>
         </div>
       </div>

@@ -8,14 +8,18 @@ import {
   createVehicle,
   updateVehicle,
   deleteVehicleApi,
+  fetchVehicleBrands,
+  fetchVehicleModels,
 } from "./api/vehicleService";
 
 const emptyForm = {
-  model: "",
-  batteryCapacityKwh: "",
-  efficiencyKmPerKwh: "",
+  variant: "",
+  plate: "",
+  rangeKm: "",
   connectorType: "",
   userId: "",
+  brand_id: "",
+  model_id: "",
 };
 import { fetchUser } from "./api/userService";
 
@@ -30,6 +34,8 @@ export default function Vehicle() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [users, setUsers] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [models, setModels] = useState([]);
 
   useEffect(() => {
     const load = async () => {
@@ -59,20 +65,22 @@ export default function Vehicle() {
 
   const avgBattery = useMemo(() => {
     if (vehicles.length === 0) return 0;
-    const sum = vehicles.reduce(
-      (acc, v) => acc + Number(v.batteryCapacityKwh || 0),
-      0
-    );
-    return sum / vehicles.length;
+    const sum = vehicles.reduce((acc, v) => acc + Number(v.rangeKm || 0), 0);
+    return sum;
   }, [vehicles]);
 
   const avgEfficiency = useMemo(() => {
-    if (vehicles.length === 0) return 0;
-    const sum = vehicles.reduce(
-      (acc, v) => acc + Number(v.efficiencyKmPerKwh || 0),
-      0
-    );
-    return sum / vehicles.length;
+    return vehicles.reduce((count, element) => {
+      if (
+        element.connectorType === "CCS2" ||
+        element.connectorType === "Type2" ||
+        element.connectorType === "Type1" ||
+        element.connectorType === "NACS"
+      ) {
+        return count + 1;
+      }
+      return count;
+    }, 0);
   }, [vehicles]);
 
   const uniqueUsers = useMemo(() => {
@@ -80,17 +88,27 @@ export default function Vehicle() {
     return set.size;
   }, [vehicles]);
 
-  // 🔍 Search filter
   const filteredVehicles = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return vehicles;
 
     return vehicles.filter((v) => {
+      const matchField = (field) => {
+        if (Array.isArray(field)) {
+          return field.some((f) => String(f).toLowerCase().includes(term));
+        }
+        return String(field ?? "")
+          .toLowerCase()
+          .includes(term);
+      };
+
       return (
-        v.vehicleId?.toLowerCase().includes(term) ||
-        v.model?.toLowerCase().includes(term) ||
-        v.connectorType?.toLowerCase().includes(term) ||
-        v.userId?.toLowerCase().includes(term)
+        matchField(v.brand_name) ||
+        matchField(v.model_name) ||
+        matchField(v.connectorType) ||
+        matchField(v.userId) ||
+        matchField(v.variant) ||
+        matchField(v.plate)
       );
     });
   }, [vehicles, searchTerm]);
@@ -108,11 +126,13 @@ export default function Vehicle() {
 
   const openEditModal = (vehicle) => {
     setForm({
-      model: vehicle.model ?? "",
-      batteryCapacityKwh: vehicle.batteryCapacityKwh ?? "",
-      efficiencyKmPerKwh: vehicle.efficiencyKmPerKwh ?? "",
+      variant: vehicle.variant ?? "",
+      plate: vehicle.plate ?? "",
+      rangeKm: vehicle.rangeKm ?? "",
       connectorType: vehicle.connectorType ?? "",
       userId: vehicle.userId ?? "",
+      brand_id: vehicle.brand_id ?? "",
+      model_id: vehicle.model_id ?? "",
     });
     setEditId(vehicle.vehicleId);
     setShowModal(true);
@@ -125,8 +145,8 @@ export default function Vehicle() {
 
       const payload = {
         ...form,
-        batteryCapacityKwh: Number(form.batteryCapacityKwh),
-        efficiencyKmPerKwh: Number(form.efficiencyKmPerKwh),
+        brand_id: Number(form.brand_id),
+        model_id: Number(form.model_id),
       };
 
       if (!editId) {
@@ -135,7 +155,7 @@ export default function Vehicle() {
       } else {
         const updated = await updateVehicle(editId, payload);
         setVehicles((prev) =>
-          prev.map((v) => (v.vehicleId === editId ? { ...v, ...updated } : v))
+          prev.map((v) => (v.vehicleId === editId ? { ...v, ...updated } : v)),
         );
       }
 
@@ -171,6 +191,30 @@ export default function Vehicle() {
       }
     };
     loadUsers();
+  }, []);
+
+  useEffect(() => {
+    const loadBrands = async () => {
+      try {
+        const brands = await fetchVehicleBrands();
+        setBrands(brands || []);
+      } catch (err) {
+        console.error("Failed to load vehicle brands:", err);
+      }
+    };
+    loadBrands();
+  }, []);
+
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        const models = await fetchVehicleModels();
+        setModels(models || []);
+      } catch (err) {
+        console.error("Failed to load vehicle models:", err);
+      }
+    };
+    loadModels();
   }, []);
 
   useEffect(() => {
@@ -237,11 +281,10 @@ export default function Vehicle() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium">
-                  Avg Efficiency
+                  Connector Type
                 </p>
                 <p className="text-2xl font-bold text-gray-800">
-                  {avgEfficiency.toFixed(1)}{" "}
-                  <span className="text-sm">km/kWh</span>
+                  {avgEfficiency}
                 </p>
               </div>
             </div>
@@ -296,22 +339,25 @@ export default function Vehicle() {
                     ID
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Model
+                    Model_Name
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Battery
+                    Brand_Name
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Efficiency
+                    RangeKm
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Connector
+                    Variant
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                    User
+                    ConnecterType
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase">
-                    Actions
+                    Plate
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase">
+                    User_Id
                   </th>
                 </tr>
               </thead>
@@ -325,18 +371,25 @@ export default function Vehicle() {
                       {v.vehicleId}
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-800">
-                      {v.model}
+                      {v.model_name}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
-                      {v.batteryCapacityKwh} kWh
+                      {v.brand_name}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
-                      {v.efficiencyKmPerKwh} km/kWh
+                      {v.rangeKm} km
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {v.variant}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg text-xs font-medium">
                         {v.connectorType}
                       </span>
+                    </td>
+
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {v.plate}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {v.userId}
@@ -363,7 +416,7 @@ export default function Vehicle() {
                 {!loading && filteredVehicles.length === 0 && (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={10}
                       className="px-6 py-8 text-center text-sm text-gray-500"
                     >
                       No vehicles found.
@@ -402,42 +455,57 @@ export default function Vehicle() {
       >
         <div className="space-y-4">
           <select
-            name="model"
-            value={form.model}
+            name="brand_id"
+            value={form.brand_id}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+          >
+            <option value="">Select Brand</option>
+            {brands.map((b) => (
+              <option key={b.brand_id} value={b.brand_id}>
+                {b.brand_name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            name="model_id"
+            value={form.model_id}
             onChange={handleChange}
             className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
           >
             <option value="">Select Model</option>
-            <option value="Model S">Model S</option>
-            <option value="Model 3">Model 3</option>
-            <option value="Model X">Model X</option>
-            <option value="Model Y">Model Y</option>
-            <option value="Nissan Leaf">Nissan Leaf</option>
-            <option value="Chevrolet Bolt">Chevrolet Bolt</option>
-            <option value="Volkswagen ID.4">Volkswagen ID.4</option>
-            <option value="Hyundai Kona Electric">Hyundai Kona Electric</option>
-            <option value="Kia EV6">Kia EV6</option>
-            <option value="BYD Seal">BYD Seal</option>
-            <option value="BYD Atto 3 (Yuan Plus)">
-              BYD Atto 3 (Yuan Plus)
-            </option>
-            <option value="BYD Dolphin">BYD Dolphin</option>
+            {models
+              .filter((m) => m.brand_id === m.model_id)
+              .map((m) => (
+                <option key={m.model_id} value={m.model_id}>
+                  {m.model_name}
+                </option>
+              ))}
           </select>
 
           <input
-            name="batteryCapacityKwh"
-            placeholder="Battery Capacity (kWh)"
+            name="variant"
+            placeholder="Variant"
             type="number"
-            value={form.batteryCapacityKwh}
+            value={form.variant}
             onChange={handleChange}
             className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
           />
 
           <input
-            name="efficiencyKmPerKwh"
-            placeholder="Efficiency (km/kWh)"
+            name="rangeKm"
+            placeholder="Range (km)"
             type="number"
-            value={form.efficiencyKmPerKwh}
+            value={form.rangeKm}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+          />
+
+          <input
+            name="plate"
+            placeholder="Plate"
+            value={form.plate}
             onChange={handleChange}
             className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
           />

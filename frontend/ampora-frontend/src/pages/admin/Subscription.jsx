@@ -114,13 +114,15 @@ export default function SubscriptionManager() {
         const created = await createSubscription(payload);
 
         setSubscriptions((prev) =>
-          created ? [created, ...prev] : [payload, ...prev]
+          created ? [created, ...prev] : [payload, ...prev],
         );
       } else if (mode === "edit" && selectedId) {
         const updated = await updateSubscription(selectedId, payload);
         const newData = updated || payload;
         setSubscriptions((prev) =>
-          prev.map((sub) => (sub.subscriptionId === selectedId ? newData : sub))
+          prev.map((sub) =>
+            sub.subscriptionId === selectedId ? newData : sub,
+          ),
         );
       }
 
@@ -144,7 +146,7 @@ export default function SubscriptionManager() {
       setError(null);
       await deleteSubscription(id);
       setSubscriptions((prev) =>
-        prev.filter((sub) => sub.subscriptionId !== id)
+        prev.filter((sub) => sub.subscriptionId !== id),
       );
     } catch (err) {
       console.error(err);
@@ -183,7 +185,7 @@ export default function SubscriptionManager() {
   }, [isModalOpen]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex justify-center px-4 py-10">
+    <div className="min-h-screen bg-slate-50 flex justify-center px-4 py-30">
       <div className="w-full max-w-6xl">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
