@@ -503,9 +503,9 @@ runnable = RunnableWithMessageHistory(
 def _resolve_missing_station_ids(stations_list: List[dict]) -> None:
     """
     FIXED:
-    - name exact match අඩු වැඩී වෙන නිසා ILIKE %name% use කරනවා
-    - lat/lng tolerance වැඩි කරනවා (0.002 ~ ~200m range)
-    - nearest station_id pick කරනවා
+    - Used ILIKE %name% instead of exact name matching to handle small variations in names
+    - Increased latitude/longitude tolerance (0.002 ≈ ~200m range)
+    - Selected the nearest station_id instead of relying on a direct match
     """
     missing = [s for s in stations_list if not (s.get("station_id") or s.get("stationId"))]
     if not missing:
