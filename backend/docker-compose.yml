@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: ampora_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ampora
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    image: numidu/ampora_backend:latest
+    container_name: ampora_backend
+    restart: always
+    depends_on:
+      - postgres
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ampora
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres123
+      SERVER_PORT: 8083
+      # This variable will be passed from the SSH command in Jenkins
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+
+volumes:
+  postgres_data:
