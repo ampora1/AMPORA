@@ -1,6 +1,6 @@
 const BASE_URL =
   import.meta.env.VITE_VEHICLE_API_URL ||
-  "http://13.211.243.202:8083/api/vehicles";
+  "https://ampora.dev/api/vehicles";
 
 async function handleResponse(res) {
   if (!res.ok) {
@@ -44,11 +44,11 @@ export async function deleteVehicleApi(id) {
 }
 
 export async function fetchVehicleBrands() {
-  const res = await fetch("http://13.211.243.202:8083/api/brands");
+  const res = await fetch("https://ampora.dev/api/brands");
   return handleResponse(res);
 }
 
 export async function fetchVehicleModels(brandId) {
-  const res = await fetch(`http://13.211.243.202:8083/api/model`);
+  const res = await fetch(`https://ampora.dev/api/model`);
   return handleResponse(res);
 }

@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { FiCreditCard, FiLock } from "react-icons/fi";
 import { FaCcVisa, FaCcMastercard } from "react-icons/fa";
 
-const BACKEND = "http://13.211.243.202:8083";
+const BACKEND = "https://ampora.dev";
 const EV_GREEN = "#00d491";
 
 export default function Payment() {
@@ -38,9 +38,9 @@ export default function Payment() {
 
       const fields = {
         merchant_id: data.merchantId,
-        return_url: "http://15.134.60.252/payment-success",
-        cancel_url: "http://15.134.60.252/payment-cancel",
-        notify_url: "http://13.211.243.202:8083/api/payment/payhere/notify1",
+        return_url: "https://ampora.dev/payment-success",
+        cancel_url: "https://ampora.dev/payment-cancel",
+        notify_url: "https://ampora.dev/api/payment/payhere/notify1",
 
         order_id: orderId,
         items: "EV Charging Slot Booking",

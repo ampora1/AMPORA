@@ -1,6 +1,6 @@
 const BASE_URL =
   import.meta.env.VITE_SUBSCRIPTION_API_URL ||
-  "http://13.211.243.202:8083/api/subscription";
+  "https://ampora.dev/api/subscription";
 
 async function handleResponse(res) {
   if (!res.ok) {

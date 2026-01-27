@@ -1,5 +1,5 @@
 const BASE_URL =
-  import.meta.env.VITE_BOOKING_API_URL || "http://13.211.243.202:8083/api/bookings";
+  import.meta.env.VITE_BOOKING_API_URL || "https://ampora.dev/api/bookings";
 
 async function handleResponse(res) {
   if (!res.ok) {

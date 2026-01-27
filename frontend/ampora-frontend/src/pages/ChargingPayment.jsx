@@ -1,7 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { useState } from "react";
 
-const BACKEND = "http://13.211.243.202:8083";
+const BACKEND = "https://ampora.dev";
 
 export default function ChargingPayment() {
   const { state } = useLocation();

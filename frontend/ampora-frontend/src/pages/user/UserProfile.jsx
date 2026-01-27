@@ -32,7 +32,7 @@ export default function UserProfile() {
 
   async function fetchUserData() {
     const res = await fetch(
-      "http://13.211.243.202:8083/api/users/32389639-de6e-464a-afc9-d18060391373"
+      "https://ampora.dev/api/users/32389639-de6e-464a-afc9-d18060391373"
     );
     const data = await res.json();
     setUser(data);
@@ -40,7 +40,7 @@ export default function UserProfile() {
 
   async function updateFunction() {
     const resp = await fetch(
-      "http://13.211.243.202:8083/api/users/32389639-de6e-464a-afc9-d18060391373",
+      "https://ampora.dev/api/users/32389639-de6e-464a-afc9-d18060391373",
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },

@@ -1,6 +1,6 @@
 const BASE_URL =
   import.meta.env.VITE_CHARGER_API_URL ||
-  "http://13.211.243.202:8083/api/charger";
+  "https://ampora.dev/api/charger";
 
 async function handleResponse(res) {
   if (!res.ok) {
