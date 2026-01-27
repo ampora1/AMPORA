@@ -91,7 +91,7 @@ export default function PackageSelector() {
 
       // 1️⃣ Request secure hash
       const res = await fetch(
-        "http://13.211.243.202:8083/api/payment/payhere/hash",
+        "https://ampora.dev/api/payment/payhere/hash",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -121,7 +121,7 @@ export default function PackageSelector() {
 
         return_url: "http://ampora.dev/payment-success",
         cancel_url: "http://ampora.dev/package",
-        notify_url: "http://13.211.243.202:8083/api/payment/payhere/notify",
+        notify_url: "https://ampora.dev/api/payment/payhere/notify",
 
         order_id: orderId,
         items: pkg.name,
