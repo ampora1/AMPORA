@@ -5,5 +5,5 @@ services:
     build: ./frontend/ampora-frontend
     container_name: ampora_frontend
     ports:
-      - "80:80"
+       - "127.0.0.1:3000:80"
     restart: always

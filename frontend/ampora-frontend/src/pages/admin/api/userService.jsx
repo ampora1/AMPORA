@@ -1,5 +1,5 @@
 const BASE_URL =
-  import.meta.env.VITE_USER_API_URL || "http://13.211.243.202:8083/api/userss";
+  import.meta.env.VITE_USER_API_URL || "http://13.211.243.202:8083/api/users";
 
 async function handleResponse(res) {
   if (!res.ok) {

@@ -129,7 +129,7 @@ export default function UserPage() {
 
   const handleDelete = async (userId) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this user?"
+      "Are you sure you want to delete this user?",
     );
     if (!confirmed) return;
 
@@ -178,9 +178,9 @@ export default function UserPage() {
                 <div className="w-6 h-6 bg-green-500 rounded-lg"></div>
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">Oprarer</p>
+                <p className="text-xs text-gray-500 font-medium">Operator</p>
                 <p className="text-2xl font-bold text-gray-800">
-                  {users.filter((u) => u.role === "Operater").length}
+                  {users.filter((u) => u.role === "OPERATOR").length}
                 </p>
               </div>
             </div>
@@ -194,7 +194,7 @@ export default function UserPage() {
               <div>
                 <p className="text-xs text-gray-500 font-medium">Admins</p>
                 <p className="text-2xl font-bold text-gray-800">
-                  {users.filter((u) => u.role === "Admin").length}
+                  {users.filter((u) => u.role === "ADMIN").length}
                 </p>
               </div>
             </div>
@@ -289,7 +289,7 @@ export default function UserPage() {
                     <td className="px-6 py-4">
                       <span
                         className={`px-3 py-1 text-xs font-semibold rounded-full border ${getRoleBadgeColor(
-                          u.role
+                          u.role,
                         )}`}
                       >
                         {u.role}
@@ -351,8 +351,8 @@ export default function UserPage() {
                 {saving
                   ? "Saving..."
                   : editingUserId !== null
-                  ? "Update User"
-                  : "Add User"}
+                    ? "Update User"
+                    : "Add User"}
               </button>
             </div>
           }

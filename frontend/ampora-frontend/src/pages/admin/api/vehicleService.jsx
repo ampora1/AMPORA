@@ -1,5 +1,6 @@
 const BASE_URL =
-  import.meta.env.VITE_VEHICLE_API_URL || "http://13.211.243.202:8083/api/vehicles";
+  import.meta.env.VITE_VEHICLE_API_URL ||
+  "http://13.211.243.202:8083/api/vehicles";
 
 async function handleResponse(res) {
   if (!res.ok) {
@@ -39,5 +40,15 @@ export async function deleteVehicleApi(id) {
   const res = await fetch(`${BASE_URL}/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
+  return handleResponse(res);
+}
+
+export async function fetchVehicleBrands() {
+  const res = await fetch("http://13.211.243.202:8083/api/brands");
+  return handleResponse(res);
+}
+
+export async function fetchVehicleModels(brandId) {
+  const res = await fetch(`http://13.211.243.202:8083/api/model`);
   return handleResponse(res);
 }

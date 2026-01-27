@@ -12,7 +12,7 @@ import {
 import { fetchChargers } from "../api/chargerService";
 
 export default function TopStationsFromSessionsFetch({
-  sessions = [],
+  booking = [],
   topN = 5,
 }) {
   const [chargers, setChargers] = useState([]);
@@ -20,49 +20,58 @@ export default function TopStationsFromSessionsFetch({
 
   useEffect(() => {
     let mounted = true;
+
     async function load() {
       try {
         const data = await fetchChargers();
         if (mounted) setChargers(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("failed to fetch chargers", err);
+        console.error("Failed to fetch chargers", err);
       } finally {
         if (mounted) setLoading(false);
       }
     }
+
     load();
     return () => (mounted = false);
   }, []);
 
   const data = useMemo(() => {
+    // chargerId → stationName
     const chargerToStation = new Map();
+
     chargers.forEach((ch) => {
-      const cid = ch.chargerId || ch.chargerID || ch.id;
-      const stName =
-        ch.stationName || ch.stationName || ch.stationId || "Unknown Station";
-      if (cid) chargerToStation.set(cid, stName);
+      const chargerId = ch.chargerId ?? ch.chargerID ?? ch.id;
+      const stationName =
+        ch.stationName ?? ch.station ?? ch.stationId ?? "Unknown Station";
+
+      if (chargerId) chargerToStation.set(chargerId, stationName);
     });
 
+    // aggregate revenue per station
     const agg = new Map();
-    sessions.forEach((s) => {
-      const cid = s.chargerId || s.chargerID || s.charger;
-      const stationName = chargerToStation.get(cid) || "Unknown Station";
-      const cost = Number(s.cost || s.amount || 0);
-      agg.set(stationName, (agg.get(stationName) || 0) + cost);
+
+    booking.forEach((b) => {
+      const chargerId = b.chargerId ?? b.chargerID ?? b.charger;
+      const stationName = chargerToStation.get(chargerId) ?? "Unknown Station";
+
+      const revenue = Number(b.amount ?? 0);
+      if (!Number.isFinite(revenue)) return;
+
+      agg.set(stationName, (agg.get(stationName) || 0) + revenue);
     });
 
-    const arr = Array.from(agg.entries()).map(([station, revenue]) => ({
-      station,
-      revenue,
-    }));
-    arr.sort((a, b) => b.revenue - a.revenue);
-    return arr.slice(0, topN);
-  }, [sessions, chargers, topN]);
+    return Array.from(agg.entries())
+      .map(([station, revenue]) => ({ station, revenue }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, topN);
+  }, [booking, chargers, topN]);
 
   if (loading)
     return (
       <div className="p-4 text-sm text-gray-500">Loading top stations...</div>
     );
+
   if (data.length === 0)
     return (
       <div style={{ padding: 12 }}>
@@ -76,14 +85,11 @@ export default function TopStationsFromSessionsFetch({
       <h3 style={{ marginBottom: 8 }}>Top Stations</h3>
 
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={data}
-          margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
-        >
+        <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="station" />
           <YAxis />
-          <Tooltip formatter={(value) => `₹ ${value}`} />
+          <Tooltip formatter={(v) => `₹ ${v}`} />
           <Bar dataKey="revenue" fill="#10b981" />
         </BarChart>
       </ResponsiveContainer>
