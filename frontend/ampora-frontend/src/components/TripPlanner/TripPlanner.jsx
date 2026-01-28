@@ -54,82 +54,106 @@ function decodePolyline(encoded) {
   return points;
 }
 
-/* ================= EV HELPERS ================= */
 
-function usableEnergyKwh(batteryPct, batteryKwh, degradation = 0) {
-  return (batteryPct / 100) * batteryKwh * (1 - degradation / 100) * 0.9;
-}
-
-function requiredEnergyKwh(distanceKm, consumption) {
-  return distanceKm * consumption;
-}
-
-function chargingTimeMinutes(energyKwh, powerKw) {
-  return Math.ceil((energyKwh / powerKw) * 60);
-}
-
-function terrainFactor(distanceKm) {
-  if (distanceKm > 150) return 1.15; // hill country
-  return 1.0;
-}
 /* ================= COMPONENT ================= */
 export default function TripPlanner() {
   const isLoggedIn = Boolean(localStorage.getItem("token"));
   const userId = localStorage.getItem("userId");
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: "AIzaSyDgg91f6DBk5-6ugJ2i684WkRuyq5w5rcM",
+    googleMapsApiKey: "AIzaSyCGX_5oc5ijf_B-df9TT_zocjcc4-qfBRk",
     libraries: ["places"],
   });
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatInput, setChatInput] = useState("");
-  const [chatMessages, setChatMessages] = useState([]);
-  async function sendChatMessage() {
-    if (!chatInput.trim()) return;
+const conversationIdRef = useRef(`trip-${Date.now()}`);
+const [chatOpen, setChatOpen] = useState(false);
+const [chatInput, setChatInput] = useState("");
+const [chatMessages, setChatMessages] = useState([]);
+const audioRef = useRef(null);
+const [isListening, setIsListening] = useState(false);
+const [isTyping, setIsTyping] = useState(false);
+const messagesEndRef = useRef(null);
 
-    const userMessage = chatInput;
+useEffect(() => {
+  messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+}, [chatMessages]);
 
-    // show user message immediately
-    setChatMessages(prev => [
-      ...prev,
-      { role: "user", text: userMessage }
-    ]);
-    setChatInput("");
-
-    try {
-      const res = await fetch("http://127.0.0.1:8001/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversation_id: conversationIdRef.current,
-          start_city: startText,
-          end_city: endText,
-          soc_level: batteryPct,
-          user_text: userMessage,
-          stations: stations.map(s => ({
-            name: s.name,
-            lat: s.lat,
-            lng: s.lon,
-            address: s.address,
-            status: s.status
-          }))
-        })
-      });
-
-      const data = await res.json();
-
-      setChatMessages(prev => [
-        ...prev,
-        { role: "ai", text: data.assistant_text }
-      ]);
-    } catch (err) {
-      setChatMessages(prev => [
-        ...prev,
-        { role: "ai", text: "⚠️ Unable to reach assistant right now." }
-      ]);
-    }
+const handleVoiceInput = () => {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert("not valid to voice recognition");
+    return;
   }
 
-  const conversationIdRef = useRef(`trip-${Date.now()}`);
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US"; 
+
+  recognition.onstart = () => setIsListening(true);
+  recognition.onend = () => setIsListening(false);
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    setChatInput(transcript);
+  };
+
+  recognition.start();
+};
+async function sendChatMessage() {
+  if (!chatInput.trim()) return;
+
+  if (audioRef.current) {
+    audioRef.current.pause();
+    audioRef.current = null;
+  }
+
+  setIsTyping(true); 
+  const userMessage = chatInput;
+  setChatMessages(prev => [...prev, { role: "user", text: userMessage }]);
+  setChatInput("");
+
+  try {
+    const res = await fetch("https://ampora.dev/ml/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        conversation_id: conversationIdRef.current,
+        start_city: startText,
+        end_city: endText,
+        soc_level: batteryPct,
+        user_text: userMessage,
+        stations: stations.map(s => ({
+          station_id: s.stationId,
+          name: s.name,
+          lat: s.lat,
+          lng: s.lon,
+          address: s.address,
+          status: s.status
+        }))
+      })
+    });
+
+    const data = await res.json();
+    setIsTyping(false);
+
+    setChatMessages(prev => [
+      ...prev,
+      { role: "ai", text: data.assistant_text }
+    ]);
+
+    if (data.audio_base64) {
+      const audioSrc = `data:audio/mp3;base64,${data.audio_base64}`;
+      const audio = new Audio(audioSrc);
+      audioRef.current = audio; 
+      audio.play().catch(e => console.error("Audio playback error:", e));
+    }
+
+  } catch (err) {
+    setIsTyping(false);
+    setChatMessages(prev => [
+      ...prev,
+      { role: "ai", text: "⚠️ Unable to reach assistant right now." }
+    ]);
+  }
+}
+
   const mapCenter = { lat: 7.8731, lng: 80.7718 };
   const [avoidHighways, setAvoidHighways] = useState(false);
   /* ===== START / END ===== */
@@ -230,102 +254,55 @@ export default function TripPlanner() {
 
 
   function evaluateTrip(route, stations) {
-  if (!selectedVehicle) {
-    setTripStatus({ ok: false, msg: "Select a vehicle first" });
-    return;
-  }
+    if (!selectedVehicle) {
+      setTripStatus({ ok: false, msg: "Select a vehicle first" });
+      return;
+    }
 
-  /* ---------------- VEHICLE DATA ---------------- */
-  const batteryKwh = selectedVehicle.batteryKwh ?? 60;
-  const consumption = selectedVehicle.consumptionKwhPerKm ?? 0.18;
+    const fullRangeKm = selectedVehicle.rangeKm;
+    const availableKm = (batteryPct / 100) * fullRangeKm;
 
-  /* ---------------- ROUTE DATA ---------------- */
-  const routeDistanceKm = route.legs[0].distance.value / 1000;
 
-  /* ---------------- INITIAL STATE ---------------- */
-  let currentEnergy =
-    (batteryPct / 100) * batteryKwh * 0.9; // 10% safety buffer
-  let currentPositionKm = 0;
+    const routeDistanceKm = route.legs[0].distance.value / 1000;
 
-  const orderedStations = [...stations].sort(
-    (a, b) => a.distanceFromStartKm - b.distanceFromStartKm
-  );
 
-  let remainingStations = [...orderedStations];
-  const chargePlan = [];
+    if (stations.length === 0) {
+      if (availableKm >= routeDistanceKm) {
+        setTripStatus({
+          ok: true,
+          msg: "Trip possible without charging",
+        });
+      } else {
+        setTripStatus({
+          ok: false,
+          msg: `Trip NOT possible. Need ${routeDistanceKm.toFixed(
+            1
+          )} km but only ${availableKm.toFixed(1)} km available.`,
+        });
+      }
+      return;
+    }
 
-  /* ================= MAIN LOOP ================= */
-  while (true) {
-    /* ---- Can we reach destination directly? ---- */
-    const remainingKm = routeDistanceKm - currentPositionKm;
-    const energyToDestination = remainingKm * consumption;
 
-    if (energyToDestination <= currentEnergy) {
+    const firstStation = stations[0];
+
+
+    const distanceToFirstStationKm = firstStation.distanceFromStartKm;
+
+    if (availableKm >= distanceToFirstStationKm) {
       setTripStatus({
         ok: true,
-        msg:
-          chargePlan.length === 0
-            ? "Trip possible without charging"
-            : `Trip possible with ${chargePlan.length} charging stop(s)`,
-        chargePlan,
+        msg: "Trip possible (can reach first charging station)",
       });
-      return;
-    }
-
-    /* ---- Find all reachable stations ahead ---- */
-    const reachableStations = remainingStations.filter(s => {
-      const kmToStation = s.distanceFromStartKm - currentPositionKm;
-      return (
-        kmToStation > 0 &&
-        kmToStation * consumption <= currentEnergy
-      );
-    });
-
-    /* ---- No reachable station = REAL FAILURE ---- */
-    if (reachableStations.length === 0) {
+    } else {
       setTripStatus({
         ok: false,
-        msg:
-          currentPositionKm === 0
-            ? "Cannot reach any charging station with the current battery level."
-            : "Cannot reach the next charging station from the last stop.",
+        msg: `Trip NOT possible. Cannot reach first charging station (${distanceToFirstStationKm.toFixed(
+          1
+        )} km). Available range is ${availableKm.toFixed(1)} km.`,
       });
-      return;
     }
-
-    /* ---- Pick BEST reachable station ---- */
-    const nextStation = reachableStations.sort(
-      (a, b) => b.powerKw - a.powerKw
-    )[0];
-
-    /* ---- Travel to station ---- */
-    const travelKm =
-      nextStation.distanceFromStartKm - currentPositionKm;
-
-    currentEnergy -= travelKm * consumption;
-    currentPositionKm = nextStation.distanceFromStartKm;
-
-    /* ---- Charge (assume full charge) ---- */
-    const energyToFull = batteryKwh - currentEnergy;
-    const minutes = Math.ceil(
-      (energyToFull / nextStation.powerKw) * 60
-    );
-
-    chargePlan.push({
-      station: nextStation.name,
-      minutes,
-    });
-
-    currentEnergy = batteryKwh * 0.9;
-
-    /* ---- Remove passed stations ---- */
-    remainingStations = remainingStations.filter(
-      s => s.distanceFromStartKm > currentPositionKm
-    );
   }
-}
-
-
 
 
 
@@ -338,8 +315,8 @@ export default function TripPlanner() {
   if (!isLoaded) return <div>Loading maps…</div>;
 
   return (
-    <div className="min-h-screen bg-[#edffff]  space-y-6">
-      <div className="relative lg:mt-0 mt-5 lg:h-[34vh] h-[25vh] rounded-b-[70px] overflow-hidden bg-gradient-to-tr from-teal-900 via-emerald-800 to-teal-700"> <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 120"> <path fill="rgba(255,255,255,0.15)" d="M0,64L60,58.7C120,53,240,43,360,53.3C480,64,600,96,720,101.3C840,107,960,85,1080,69.3C1200,53,1320,43,1380,37.3L1440,32V120H0Z" /> </svg> <div className="relative h-full flex flex-col items-center justify-center text-center px-6"> <h1 className="lg:text-5xl md:text-6xl text-3xl  font-extrabold text-white"> EV Trip <span className="text-emerald-300">Planner</span> </h1> <p className="mt-3 text-emerald-100 text-lg"> Smart • Efficient • Stress-Free </p> </div> </div>
+    <div className="min-h-screen bg-[#edffff] p-8 space-y-6">
+      <div className="relative h-[34vh] rounded-b-[70px] overflow-hidden bg-gradient-to-tr from-teal-900 via-emerald-800 to-teal-700"> <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 120"> <path fill="rgba(255,255,255,0.15)" d="M0,64L60,58.7C120,53,240,43,360,53.3C480,64,600,96,720,101.3C840,107,960,85,1080,69.3C1200,53,1320,43,1380,37.3L1440,32V120H0Z" /> </svg> <div className="relative h-full flex flex-col items-center justify-center text-center px-6"> <h1 className="text-5xl md:text-6xl font-extrabold text-white"> EV Trip <span className="text-emerald-300">Planner</span> </h1> <p className="mt-3 text-emerald-100 text-lg"> Smart • Efficient • Stress-Free </p> </div> </div>
       {/* ===== INPUT PANEL ===== */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -476,7 +453,7 @@ export default function TripPlanner() {
 
             <button
               onClick={findRoutes}
-              className="rounded-2xl bg-emerald-500 text-white sm:h-[10vh] md:h-[10vh] font-semibold shadow-md hover:scale-[1.02] transition"
+              className="rounded-2xl bg-emerald-500 text-white font-semibold shadow-md hover:scale-[1.02] transition"
             >
               Find Routes
             </button>
@@ -582,62 +559,92 @@ export default function TripPlanner() {
 
 
 
-      <button
-        onClick={() => setChatOpen(true)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-emerald-500 text-white shadow-xl flex items-center justify-center hover:scale-105 transition"
-      >
-        💬
-      </button>
-      <AnimatePresence>
-        {chatOpen && (
-          <motion.div
-            initial={{ x: 400 }}
-            animate={{ x: 0 }}
-            exit={{ x: 400 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed bottom-0 right-0 z-50 w-[360px] h-[500px] bg-white rounded-l-3xl shadow-2xl flex flex-col"
+
+<button
+  onClick={() => setChatOpen(true)}
+  className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-emerald-500 text-white shadow-xl flex items-center justify-center hover:scale-105 transition"
+>
+  💬
+</button>
+
+<AnimatePresence>
+  {chatOpen && (
+    <motion.div
+      initial={{ x: 400 }}
+      animate={{ x: 0 }}
+      exit={{ x: 400 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      className="fixed bottom-0 right-0 z-50 w-[360px] h-[550px] bg-white rounded-l-3xl shadow-2xl flex flex-col border-l border-emerald-100"
+    >
+      {/* Header */}
+      <div className="p-4 bg-emerald-500 text-white rounded-tl-3xl flex justify-between items-center shadow-md">
+        <h3 className="font-semibold flex items-center gap-2">
+          AMPORA Assistant ⚡
+        </h3>
+        <button onClick={() => setChatOpen(false)} className="hover:text-red-200">✕</button>
+      </div>
+
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#edffff]">
+        {chatMessages.map((m, i) => (
+          <div
+            key={i}
+            className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${
+              m.role === "user"
+                ? "ml-auto bg-emerald-500 text-white"
+                : "mr-auto bg-white text-gray-800 border border-emerald-50"
+            }`}
           >
-            {/* Header */}
-            <div className="p-4 bg-emerald-500 text-white rounded-tl-3xl flex justify-between items-center">
-              <h3 className="font-semibold">AMPORA Assistant ⚡</h3>
-              <button onClick={() => setChatOpen(false)}>✕</button>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#edffff]">
-              {chatMessages.map((m, i) => (
-                <div
-                  key={i}
-                  className={`max-w-[80%] p-3 rounded-2xl text-sm ${m.role === "user"
-                    ? "ml-auto bg-emerald-500 text-white"
-                    : "mr-auto bg-white shadow"
-                    }`}
-                >
-                  {m.text}
-                </div>
-              ))}
-            </div>
-
-            {/* Input */}
-            <div className="p-3 border-t flex gap-2">
-              <input
-                value={chatInput}
-                onChange={e => setChatInput(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && sendChatMessage()}
-                placeholder="Ask about charging, food, route…"
-                className="flex-1 p-3 rounded-xl bg-[#edffff] outline-none"
-              />
-              <button
-                onClick={sendChatMessage}
-                className="px-4 rounded-xl bg-emerald-500 text-white font-semibold"
-              >
-                Send
-              </button>
-            </div>
-          </motion.div>
+            {m.text}
+          </div>
+        ))}
+        
+        {/* NEW: Thinking Indicator */}
+        {isTyping && (
+          <div className="mr-auto bg-white/50 p-2 rounded-xl text-[10px] text-emerald-600 font-medium animate-pulse">
+             Assistant is thinking...
+          </div>
         )}
-      </AnimatePresence>
+        
+        {/* NEW: Auto-scroll Target */}
+        <div ref={messagesEndRef} />
+      </div>
 
-    </div>
+      {/* Input Section */}
+      <div className="p-3 border-t bg-white flex flex-col gap-2">
+        <div className="flex gap-2 items-center">
+          {/* NEW: Microphone Button */}
+          <button
+            onClick={handleVoiceInput}
+            className={`p-3 rounded-xl transition-all ${
+              isListening 
+                ? "bg-red-500 text-white animate-pulse" 
+                : "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
+            }`}
+          >
+            {isListening ? "🛑" : "🎤"}
+          </button>
+
+          <input
+            value={chatInput}
+            onChange={e => setChatInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && sendChatMessage()}
+            placeholder={isListening ? "Listening..." : "Ask something..."}
+            className="flex-1 p-3 rounded-xl bg-[#edffff] outline-none border focus:border-emerald-400 text-sm"
+          />
+        </div>
+        
+        <button
+          onClick={sendChatMessage}
+          disabled={isTyping}
+          className="w-full py-2 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 transition disabled:opacity-50"
+        >
+          Send
+        </button>
+      </div>
+    </motion.div>
+  )}
+    </AnimatePresence>
+  </div> 
   );
 }
