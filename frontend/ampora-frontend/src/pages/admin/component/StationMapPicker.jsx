@@ -2,7 +2,6 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useState, useEffect } from "react";
 
-// ✅ Separate component for map events (hooks rules follow කරයි)
 function LocationPicker({ onPick }) {
   useMapEvents({
     click(e) {
@@ -12,7 +11,6 @@ function LocationPicker({ onPick }) {
   return null;
 }
 
-// ✅ Main component
 export default function StationMapPicker({ lat, lng, setForm }) {
   const [position, setPosition] = useState(
     lat && lng ? [lat, lng] : [6.9271, 79.8612],
