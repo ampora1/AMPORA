@@ -53,14 +53,18 @@ import ChargerPage from "./pages/admin/Charger.jsx";
 // import Subscription from "./pages/admin/subscriptionService.jsx";
 import BookingStation from "./pages/admin/BookingStation.jsx";
 import PackageSelector from "./pages/PackageSelector.jsx";
+import EmailVerify from "./pages/EmailVerify.jsx";
+import VerifyOtp from "./pages/VerifyOtp.jsx";
+
 import ChargingPayment from "./pages/ChargingPayment.jsx";
 import SubscriptionManager from "./pages/admin/Subscription.jsx";
 
 function AppLayout() {
   const { pathname } = useLocation();
 
-  const authPages = ["/login", "/register", "/forget"];
-  const isAuthPage = authPages.includes(pathname);
+  const authPages = ["/login", "/register"];
+  // const isAuthPage = authPages.includes(pathname);
+  const isAuthPage =authPages.includes(pathname) || pathname.startsWith("/password-reset");
   const isOperatorPage = pathname.startsWith("/operator");
   const isAdminPage = pathname.startsWith("/admin");
 
@@ -78,7 +82,10 @@ function AppLayout() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/forget" element={<Forget />} />
+          <Route path="/password-reset/forget/:id" element={<Forget />} />
+          <Route path="/password-reset/confirm-email" element={<EmailVerify />} />
+          <Route path="/password-reset/verify-otp/:id" element={<VerifyOtp />} />
+
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/trip" element={<TripPlanner />} />
           <Route path="/stations" element={<StationFinder />} />
@@ -133,6 +140,8 @@ function AppLayout() {
     </>
   );
 }
+
+
 
 export default function App() {
   return <AppLayout />;

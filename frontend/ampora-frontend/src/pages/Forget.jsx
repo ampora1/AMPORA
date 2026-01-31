@@ -1,31 +1,64 @@
 import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import Loading from "../components/Loading";
+import { Eye, EyeOff } from "lucide-react";
+
 
 export default function ForgetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const { id } = useParams();
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
 
-    if (password.length < 8) {
-      alert("Password must contain at least 8 characters");
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    setLoading(true);
+
+    const res = await fetch(
+      `http://localhost:8083/password-reset/reset-password/${id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          newPassword: password,
+          confirmPassword: confirmPassword,
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      const data = await res.json();
+      setError(data.message || "Password reset failed");
       return;
     }
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
 
-    console.log("Password Reset Successful");
-  };
+    navigate("/login");
+
+  } catch (err) {
+    setError("Something went wrong. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
-    <div className="min-h-screen w-screen flex  flex-row overflow-hidden p-4 justify-center bg-[#EDFEFF] fixed top-0 right-0 left-0">
+    loading ? <Loading/> : (
+      <div className="min-h-screen w-screen flex  flex-row overflow-hidden p-4 justify-center bg-[#EDFEFF] fixed top-0 right-0 left-0">
      
-      <div className="w-[500px]  bg-gray-100 rounded-2xl shadow-xl/30 p-10 text-center ">
+      <div className="w-[500px] h-[600px] bg-white rounded-2xl shadow-xl/30 p-10 text-center">
         <div className=" p-8">
-        <h2 className="text-2xl font-bold text-black mb-2 ">Forget Password?</h2>
-        <p className="text-gray-600 mb-4 font-medium">
+        <h2 className="text-3xl font-extrabold text-emerald-700 mb-2 ">Forget Password</h2>
+        <p className="text-gray-600 mb-4">
           Enter your New password below to complete the reset process
         </p>
         </div>
@@ -33,47 +66,64 @@ export default function ForgetPassword() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5 ">
           {/* Password */}
-          <div className="text-left">
-            <label className="font-medium text-black">Password</label>
+          <div className="text-left relative">
+           
             <input
-              type="password"
-              className="w-full mt-1 px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-600"
+               type={showPassword ? "text" : "password"}
+               placeholder="Password"
+              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-400"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <p className="text-[13px] font-regular text-gray-700 mt-1">
-              password must be contain at least 8 characters
-            </p>
+
+             <button
+               type={showConfirmPassword ? "text" : "password"}
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-emerald-600"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+           
           </div>
 
           {/* Confirm Password */}
-          <div className="text-left">
-            <label className="font-medium text-black">confirm Password</label>
+          <div className="text-left relative">
+          
             <input
               type="password"
-              className="w-full mt-1 px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-600"
+               placeholder="confirm Password"
+              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-400"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
-            <p className="text-[13px] font-regular text-gray-700 mt-1">
-              Password must be identical
-            </p>
+
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-emerald-600"
+            >
+              {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+            
           </div>
 
-           <a className="w-[300px] flex items-center justify-center  p-3 ml-15 bg-[#0ABAB5] hover:bg-[#56DFCF] rounded-lg  shadow-md" href="">
-            
-            <span className=" text-white font-bold">Reset Password</span>
-          </a>
-          
+          <button
+            type="submit"
+            className="w-full h-12 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 hover:bg-[#56DFCF] rounded-lg shadow-md"
+          >
+            <span className="text-white font-bold">Reset Password</span>
+          </button>
+
         
 
         {/* Back to login */}
         
           <a href="/login">
-            <p className="text-black underline p-1 ">Back to Login</p>
+            <p className="text-emerald-600 font-semibold hover:underline ">Back to Login</p>
           </a>
         </form>
       </div>
     </div>
+    )
   );
 }
