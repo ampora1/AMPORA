@@ -12,7 +12,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE = "http://127.0.0.1:8083";
+const API_BASE = "https://ampora.dev";
 const RADIUS_KM = 10;
 
 /* ================= DISTANCE ================= */
@@ -53,7 +53,7 @@ export default function StationFinder() {
   const userId = localStorage.getItem("userId");
 
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: "AIzaSyDgg91f6DBk5-6ugJ2i684WkRuyq5w5rcM",
     libraries: ["places"],
   });
 
@@ -209,7 +209,7 @@ export default function StationFinder() {
     <div className="w-screen bg-teal-100 pb-20">
 
 
-      <div className="relative h-[34vh] rounded-b-[70px] overflow-hidden
+      <div className="relative lg:h-[34vh] h-[30vh] mt-5 lg:mt-0 rounded-b-[70px] overflow-hidden
                       bg-gradient-to-tr from-teal-900 via-emerald-800 to-teal-700">
         <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 120">
           <path
@@ -219,7 +219,7 @@ export default function StationFinder() {
         </svg>
 
         <div className="relative h-full flex flex-col items-center justify-center text-center px-6">
-          <h1 className="text-5xl md:text-6xl font-extrabold text-white">
+          <h1 className="lg:text-5xl text-3xl md:text-6xl font-extrabold text-white">
             Find <span className="text-emerald-300">EV</span> Charging Stations
           </h1>
           <p className="mt-3 text-emerald-100 text-lg">
@@ -248,7 +248,7 @@ export default function StationFinder() {
         </div>
       </div>
       {/* ================= FILTER BAR ================= */}
-      <div className="sticky top-4 z-20 mt-6">
+      <div className="sticky top-10 z-20 mt-6">
         <div className="max-w-6xl mx-auto px-4">
           <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-lg
                     px-6 py-4 flex flex-col md:flex-row
@@ -434,6 +434,7 @@ export default function StationFinder() {
               value={duration}
               onChange={(e) => setDuration(Number(e.target.value))}
             >
+              <option >Select Time slot</option>
               <option value={1}>1 hour</option>
               <option value={2}>2 hours</option>
               <option value={3}>3 hours</option>
@@ -457,22 +458,68 @@ export default function StationFinder() {
               </button>
               <button
                 disabled={!selectedCharger || availability !== true}
-                onClick={() => {
-                  alert(duration);
-                  navigate("/payments", {
-                    state: {
-                      type: "BOOKING",
-                      bill: 300,
-                      booking: {
-                        userId,
-                        chargerId: selectedCharger.id,
-                        date: bookingDate.toISOString().split("T")[0],
-                        startTime: bookingTime,
-                        duration: duration,
+                onClick={async () => {
+                  if (!bookingDate || !bookingTime || !selectedCharger) {
+                    alert("Please select date, time, and charger");
+                    return;
+                  }
+                  const [hh, mm] = bookingTime.split(":").map(Number);
+
+                  const start = new Date();
+                  start.setHours(hh, mm, 0, 0);
+
+                  const end = new Date(start);
+                  end.setHours(end.getHours() + duration);
+
+                  const endTime = end.toTimeString().slice(0, 5);
+                  try {
+                    console.log("Creating pending booking...");
+
+                    const res = await fetch(
+                      `${API_BASE}/api/payment/pending`,
+                      {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          userId,
+                          chargerId: selectedCharger.id,
+                          date: bookingDate.toISOString().split("T")[0],
+                          startTime: bookingTime,
+                          endTime: endTime,
+                          duration: duration,
+                          amount: 300,
+                        }),
+                      }
+                    );
+
+                    if (!res.ok) {
+                      const errText = await res.text();
+                      console.error("Pending booking failed:", errText);
+                      alert("Booking creation failed");
+                      return;
+                    }
+
+                    const data = await res.json();
+                    console.log("Pending booking response:", data);
+
+                    if (!data.bookingId) {
+                      alert("Booking ID not returned");
+                      return;
+                    }
+
+                    navigate("/payments", {
+                      state: {
+                        bookingId: data.bookingId,
+                        bill: 300,
                       },
-                    },
-                  });
+                    });
+
+                  } catch (err) {
+                    console.error("Pending booking error:", err);
+                    alert("Something went wrong");
+                  }
                 }}
+
                 className="flex-1 bg-emerald-500 text-white py-2 rounded-xl"
               >
                 Proceed to Payment

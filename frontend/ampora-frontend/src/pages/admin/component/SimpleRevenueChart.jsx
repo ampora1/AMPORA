@@ -9,30 +9,39 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-export default function SimpleRevenueChart({ sessions = [] }) {
+export default function SimpleRevenueChart({ booking = [] }) {
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   const data = useMemo(() => {
     const totals = Object.fromEntries(days.map((d) => [d, 0]));
 
-    sessions.forEach((s) => {
-      if (s == null || s.cost == null) return;
+    booking.forEach((b) => {
+      if (!b || b.amount == null) return;
 
-      const raw = s.startTime ?? s.createdAt ?? s.date;
-      const date = raw ? new Date(raw) : null;
-      if (!date || Number.isNaN(date.getTime())) return;
+      // ✅ Correct date parsing
+      const raw =
+        b.date && b.startTime
+          ? `${b.date}T${b.startTime}`
+          : (b.date ?? b.createdAt);
 
+      const date = new Date(raw);
+      if (Number.isNaN(date.getTime())) return;
+
+      // Convert JS Sunday-first → Monday-first
       const dayIndex = (date.getDay() + 6) % 7;
       const dayName = days[dayIndex];
 
-      const cost = Number(s.cost);
+      const cost = Number(b.amount);
       if (!Number.isFinite(cost)) return;
 
       totals[dayName] += cost;
     });
 
-    return days.map((day) => ({ day, revenue: totals[day] }));
-  }, [sessions]);
+    return days.map((day) => ({
+      day,
+      revenue: totals[day],
+    }));
+  }, [booking]);
 
   return (
     <div

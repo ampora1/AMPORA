@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Reg from "../assets/Reg.jpg";
 
-const API = "http://localhost:8083";
+const API = "https://ampora.dev";
 
 export default function Register() {
   const navigate = useNavigate();

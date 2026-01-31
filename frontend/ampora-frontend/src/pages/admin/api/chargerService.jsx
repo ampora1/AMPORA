@@ -1,5 +1,6 @@
 const BASE_URL =
-  import.meta.env.VITE_CHARGER_API_URL || "http://localhost:8083/api/charger";
+  import.meta.env.VITE_CHARGER_API_URL ||
+  "https://ampora.dev/api/charger";
 
 async function handleResponse(res) {
   if (!res.ok) {

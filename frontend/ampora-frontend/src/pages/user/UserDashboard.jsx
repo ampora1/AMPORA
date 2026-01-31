@@ -22,7 +22,7 @@ import { logout } from "../../utils/auth";
 import useChargingSocket from "../../hooks/useChargingSocket";
 import ChargingLiveCard from "../../components/LiveChargingCard";
 
-const BACKEND = "http://localhost:8083";
+const BACKEND = "https://ampora.dev";
 
 const glass =
   "backdrop-blur-xl bg-white/70 border border-emerald-200/60 shadow-[0_8px_35px_rgba(16,185,129,0.12)]";

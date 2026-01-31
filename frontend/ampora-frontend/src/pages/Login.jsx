@@ -6,7 +6,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import { Link } from "react-router-dom";
 import Loginimg from "../assets/Loginimg.png";
 
-const BACKEND = "http://localhost:8083";
+const BACKEND = "https://ampora.dev";
 
 export default function Login() {
   const [email, setEmail] = useState("");

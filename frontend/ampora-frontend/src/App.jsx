@@ -47,7 +47,6 @@ import AdminUserpage from "./pages/admin/UserPage.jsx";
 import AdminChargerSessionpage from "./pages/admin/ChargerSession.jsx";
 import AdminChargerStationPage from "./pages/admin/ChargerStation.jsx";
 
-
 import AdminLayout from "./components/Layout.jsx";
 import PaymentSuccess from "./pages/PaymentSuccess.jsx";
 import ChargerPage from "./pages/admin/Charger.jsx";
@@ -57,6 +56,8 @@ import PackageSelector from "./pages/PackageSelector.jsx";
 import EmailVerify from "./pages/EmailVerify.jsx";
 import VerifyOtp from "./pages/VerifyOtp.jsx";
 
+import ChargingPayment from "./pages/ChargingPayment.jsx";
+import SubscriptionManager from "./pages/admin/Subscription.jsx";
 
 function AppLayout() {
   const { pathname } = useLocation();
@@ -71,11 +72,9 @@ function AppLayout() {
 
   return (
     <>
-
       {!hideNavbarFooter && <Navbar />}
 
       {!isAuthPage && !isAdminPage && <Navbar />}
-
 
       <LoaderProvider>
         <Routes>
@@ -102,7 +101,8 @@ function AppLayout() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/help" element={<HelpSupport />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
-           <Route path="/package" element={<PackageSelector />} />
+          <Route path="/package" element={<PackageSelector />} />
+          <Route path="/charging-payment" element={<ChargingPayment />} />
 
           {/* ---------- OPERATOR ---------- */}
           <Route element={<OperatorLayout />}>
@@ -117,7 +117,6 @@ function AppLayout() {
           {/* ---------- ADMIN ---------- */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboardpage />} />
-
             <Route path="dashboard" element={<AdminDashboardpage />} />{" "}
             <Route path="vehicle" element={<AdminVehicle />} />{" "}
             <Route path="users" element={<AdminUserpage />} />{" "}
@@ -132,7 +131,7 @@ function AppLayout() {
             <Route path="charger" element={<ChargerPage />} />
             {/* <Route path="subscriptions" element={<Subscription />} /> */}
             <Route path="BookingStation" element={<BookingStation />} />
-
+            <Route path="Subscriptions" element={<SubscriptionManager />} />
           </Route>
         </Routes>
       </LoaderProvider>
@@ -145,9 +144,5 @@ function AppLayout() {
 
 
 export default function App() {
-  return (
-    <Router>
-      <AppLayout />
-    </Router>
-  );
+  return <AppLayout />;
 }

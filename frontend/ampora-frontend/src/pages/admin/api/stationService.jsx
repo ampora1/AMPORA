@@ -1,5 +1,6 @@
 const BASE_URL =
-  import.meta.env.VITE_STATION_API_URL || "http://localhost:8083/api/stations";
+  import.meta.env.VITE_STATION_API_URL ||
+  "https://ampora.dev/api/stations";
 
 async function handleResponse(res) {
   if (!res.ok) {

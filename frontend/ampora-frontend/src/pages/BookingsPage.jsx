@@ -8,7 +8,7 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 
-const API_BASE = "http://127.0.0.1:8083";
+const API_BASE = "https://ampora.dev";
 const EV_GREEN = "#00d491";
 
 /* ================= STATUS CONFIG ================= */

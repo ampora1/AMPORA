@@ -1,1 +1,9 @@
-# Docker Compose configuration placeholder
+version: "3.8"
+
+services:
+  frontend:
+    build: ./frontend/ampora-frontend
+    container_name: ampora_frontend
+    ports:
+       - "127.0.0.1:3000:80"
+    restart: always

@@ -1,4 +1,4 @@
-import { use, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
@@ -10,6 +10,8 @@ import {
 } from "./api/stationService";
 import Modal from "./component/Modal";
 import { fetchUser } from "./api/userService";
+import StationMapPicker from "./component/StationMapPicker";
+import StationMapPickerLazy from "./component/StationMapPickerLazy";
 
 export default function ChargerStationPage() {
   const location = useLocation();
@@ -58,10 +60,10 @@ export default function ChargerStationPage() {
   const totalStations = stations.length;
   const activeStations = stations.filter((s) => s.status === "ACTIVE").length;
   const inactiveStations = stations.filter(
-    (s) => s.status === "INACTIVE"
+    (s) => s.status === "INACTIVE",
   ).length;
   const UNDER_MAINTENANCEStations = stations.filter(
-    (s) => s.status === "UNDER_MAINTENANCE"
+    (s) => s.status === "UNDER_MAINTENANCE",
   ).length;
 
   const filteredStations = useMemo(() => {
@@ -140,7 +142,7 @@ export default function ChargerStationPage() {
 
   const handleDeleteStation = async (stationId) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this station?"
+      "Are you sure you want to delete this station?",
     );
     if (!confirmed) return;
 
@@ -383,6 +385,7 @@ export default function ChargerStationPage() {
           }
         >
           <div className="grid grid-cols-1 gap-4">
+            {/* Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Name
@@ -395,6 +398,7 @@ export default function ChargerStationPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
               />
             </div>
+            {/* Address */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Address
@@ -407,30 +411,52 @@ export default function ChargerStationPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
               />
             </div>
+            {/* MAP PICKER */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Latitude
+                Pick Station Location
               </label>
-              <input
-                type="text"
-                name="latitude"
-                value={form.latitude}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              />
+
+              {typeof window !== "undefined" ? (
+                <StationMapPickerLazy
+                  lat={form.latitude ? parseFloat(form.latitude) : null}
+                  lng={form.longitude ? parseFloat(form.longitude) : null}
+                  setForm={setForm}
+                />
+              ) : (
+                <div className="w-full h-64 border rounded-xl bg-gray-100 flex items-center justify-center">
+                  <p className="text-gray-500">Map will load on client side</p>
+                </div>
+              )}
+
+              {/* Latitude and Longitude display */}
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Latitude
+                  </label>
+                  <input
+                    type="text"
+                    value={form.latitude}
+                    readOnly
+                    className="w-full px-4 py-2 border border-gray-300 rounded-xl bg-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Longitude
+                  </label>
+                  <input
+                    type="text"
+                    value={form.longitude}
+                    readOnly
+                    className="w-full px-4 py-2 border border-gray-300 rounded-xl bg-gray-100"
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Longitude
-              </label>
-              <input
-                type="text"
-                name="longitude"
-                value={form.longitude}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              />
-            </div>
+            {/* Status */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Status
@@ -446,6 +472,7 @@ export default function ChargerStationPage() {
                 <option value="INACTIVE">Inactive</option>
               </select>
             </div>
+            {/* Operator */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Operator
@@ -457,7 +484,6 @@ export default function ChargerStationPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
               >
                 <option value="">Select operator</option>
-
                 {users
                   .filter((user) => user.role === "OPERATOR")
                   .map((user) => (
