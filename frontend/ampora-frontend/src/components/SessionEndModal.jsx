@@ -33,7 +33,7 @@ export default function SessionEndModal({ billInfo, onClose }) {
   onClick={async () => {
     try {
       const res = await fetch(
-        "http://localhost:8083/api/charging-payments/pending",
+        "https://ampora.dev/api/charging-payments/pending",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
