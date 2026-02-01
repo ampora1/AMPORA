@@ -30,16 +30,20 @@ const glass =
 export default function UserDashboard() {
   const userId = localStorage.getItem("userId");
   const {
-  data,
-  connected,
-  sessionEnded,
-  billInfo,
-  resetSession
-} = useChargingSocket();
+    data,
+    connected,
+    sessionEnded,
+    billInfo,
+    resetSession
+  } = useChargingSocket();
 
   const [user, setUser] = useState(null);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const totalEnergyUsed = data?.energy ?? 0;
+
+  const totalAmountSpent = totalEnergyUsed * 85 ?? 0;
+
 
   /* ================= LOAD USER ================= */
   useEffect(() => {
@@ -87,14 +91,14 @@ export default function UserDashboard() {
   const selectedVehicle = vehicles[0];
 
   return (
-    
+
     <div className="w-screen min-h-screen mt-20 bg-gradient-to-b from-emerald-50 via-teal-50 to-white">
-{sessionEnded && billInfo && (
-  <SessionEndModal
-    billInfo={billInfo}
-    onClose={resetSession}
-  />
-)}
+      {sessionEnded && billInfo && (
+        <SessionEndModal
+          billInfo={billInfo}
+          onClose={resetSession}
+        />
+      )}
       {/* ================= HEADER ================= */}
       <div className="mx-auto w-11/12 max-w-7xl py-8">
         <h1 className="text-3xl md:text-4xl font-extrabold text-emerald-700">
@@ -124,7 +128,7 @@ export default function UserDashboard() {
                 Energy used
               </h3>
               <p className="text-3xl font-extrabold text-emerald-700 mt-2">
-                12.4 kWh
+                {totalEnergyUsed.toFixed(3)} kWh
               </p>
             </div>
 
@@ -133,10 +137,11 @@ export default function UserDashboard() {
                 Amount spent
               </h3>
               <p className="text-3xl font-extrabold text-emerald-700 mt-2">
-                LKR 2,450
+                LKR {totalAmountSpent.toFixed(2)}
               </p>
             </div>
           </motion.div>
+
 
           {/* ===== SELECTED VEHICLE ===== */}
           {selectedVehicle && (
@@ -171,12 +176,12 @@ export default function UserDashboard() {
               </a>
             </motion.div>
           )}
-        <motion.div
-  initial={{ opacity: 0, y: 14 }}
-  animate={{ opacity: 1, y: 0 }}
->
-  <ChargingLiveCard data={data} connected={connected} />
-</motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <ChargingLiveCard data={data} connected={connected} />
+          </motion.div>
 
           {/* ===== UPCOMING BOOKING (PLACEHOLDER) ===== */}
           <motion.div
