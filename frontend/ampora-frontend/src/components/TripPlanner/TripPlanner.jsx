@@ -315,8 +315,8 @@ async function sendChatMessage() {
   if (!isLoaded) return <div>Loading maps…</div>;
 
   return (
-    <div className="min-h-screen bg-[#edffff] p-8 space-y-6">
-      <div className="relative sm:hidden h-[34vh] rounded-b-[70px] overflow-hidden bg-gradient-to-tr from-teal-900 via-emerald-800 to-teal-700"> <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 120"> <path fill="rgba(255,255,255,0.15)" d="M0,64L60,58.7C120,53,240,43,360,53.3C480,64,600,96,720,101.3C840,107,960,85,1080,69.3C1200,53,1320,43,1380,37.3L1440,32V120H0Z" /> </svg> <div className="relative h-full flex flex-col items-center justify-center text-center px-6"> <h1 className="text-5xl md:text-6xl font-extrabold text-white"> EV Trip <span className="text-emerald-300">Planner</span> </h1> <p className="mt-3 text-emerald-100 text-lg"> Smart • Efficient • Stress-Free </p> </div> </div>
+    <div className="min-h-screen bg-[#edffff]  space-y-6">
+      <div className="relative md:hidden sm:hidden h-[34vh] rounded-b-[70px] overflow-hidden bg-gradient-to-tr from-teal-900 via-emerald-800 to-teal-700"> <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 120"> <path fill="rgba(255,255,255,0.15)" d="M0,64L60,58.7C120,53,240,43,360,53.3C480,64,600,96,720,101.3C840,107,960,85,1080,69.3C1200,53,1320,43,1380,37.3L1440,32V120H0Z" /> </svg> <div className="relative h-full flex flex-col items-center justify-center text-center px-6"> <h1 className="text-5xl md:text-6xl font-extrabold text-white"> EV Trip <span className="text-emerald-300">Planner</span> </h1> <p className="mt-3 text-emerald-100 text-lg"> Smart • Efficient • Stress-Free </p> </div> </div>
       {/* ===== INPUT PANEL ===== */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
