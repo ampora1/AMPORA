@@ -59,7 +59,7 @@ export default function ChargingPaymentHistory() {
 
             return (
               <div
-                key={p.chargingPaymentId}
+                key={p.id}
                 className="bg-white rounded-3xl shadow-md p-6 space-y-4 hover:shadow-xl transition"
               >
                 {/* TOP */}
@@ -79,7 +79,7 @@ export default function ChargingPaymentHistory() {
 
                 {/* INFO */}
                 <div className="space-y-2 text-sm text-gray-700">
-                  <Row icon={<FiZap />} label="Energy Used" value={`${p.energy.toFixed(3)} kWh`} />
+                  <Row icon={<FiZap />} label="Energy Used" value={`${p.energyUsed.toFixed(3)} kWh`} />
                   <Row icon={<FiCreditCard />} label="Energy Cost" value={`LKR ${energyCost.toFixed(2)}`} />
                   <Row label="Service Charge" value={`LKR ${SERVICE_CHARGE}.00`} />
                 </div>
