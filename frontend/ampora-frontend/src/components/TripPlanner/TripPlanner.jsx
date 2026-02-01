@@ -453,7 +453,7 @@ async function sendChatMessage() {
 
             <button
               onClick={findRoutes}
-              className="rounded-2xl bg-emerald-500 text-white font-semibold shadow-md hover:scale-[1.02] transition"
+              className="rounded-2xl bg-emerald-500 lg:py-0  py-5 text-white font-semibold shadow-md hover:scale-[1.02] transition"
             >
               Find Routes
             </button>
