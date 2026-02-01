@@ -24,7 +24,7 @@ export default function Navbar() {
     ["Trip Planner", "/trip", "public"],
     ["Stations", "/stations", "public"],
     ["Bookings", "/bookings", "private"],
-    ["Payments", "/payments", "private"],
+    // ["Payments", "/payments", "private"],
     ["Dashboard", "/user-dashboard", "private"],
   ];
 
