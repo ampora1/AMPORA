@@ -9,13 +9,13 @@ export default function ChargingPayment() {
   const { state } = useLocation();
   const [loading, setLoading] = useState(false);
 
-  if (!state?.chargingPaymentId || !state?.bill || !state?.energy) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-red-600 font-semibold">
-        Invalid or expired payment session
-      </div>
-    );
-  }
+  // if (!state?.chargingPaymentId || !state?.bill || !state?.energy) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center text-red-600 font-semibold">
+  //       Invalid or expired payment session
+  //     </div>
+  //   );
+  // }
 
   const { chargingPaymentId, bill, energy } = state;
 
