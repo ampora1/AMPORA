@@ -58,6 +58,7 @@ import VerifyOtp from "./pages/VerifyOtp.jsx";
 
 import ChargingPayment from "./pages/ChargingPayment.jsx";
 import SubscriptionManager from "./pages/admin/Subscription.jsx";
+import ChargingPaymentHistory from "./ChargingPaymentHistory.jsx";
 
 function AppLayout() {
   const { pathname } = useLocation();
@@ -103,7 +104,7 @@ function AppLayout() {
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/package" element={<PackageSelector />} />
           <Route path="/charging-payment" element={<ChargingPayment />} />
-
+ <Route path="/charging-history" element={<ChargingPaymentHistory />} />
           {/* ---------- OPERATOR ---------- */}
           <Route element={<OperatorLayout />}>
             <Route path="/operator" element={<Operator />} />
