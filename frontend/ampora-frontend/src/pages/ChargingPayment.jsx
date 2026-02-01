@@ -36,10 +36,10 @@ export default function ChargingPayment() {
 
     const fields = {
       merchant_id: data.merchantId,
-      return_url: "http://15.134.60.252/payment-success",
-      cancel_url: "http://15.134.60.252/payment-cancel",
+      return_url: "https://ampora.dev/payment-success",
+      cancel_url: "https://ampora.dev/payment-cancel",
       notify_url:
-        "http://13.211.243.202:8083/api/payment/payhere/charging-notify",
+        "https://ampora.dev/api/payment/payhere/charging-notify",
 
       order_id: orderId,
       items: "EV Charging Session Payment",
