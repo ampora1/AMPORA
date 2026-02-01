@@ -65,7 +65,7 @@ export default function ChargingPaymentHistory() {
                 {/* TOP */}
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-500">
-                    #{p.chargingPaymentId.slice(0, 8)}
+                    #{p.id.slice(0, 8)}
                   </span>
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-semibold
