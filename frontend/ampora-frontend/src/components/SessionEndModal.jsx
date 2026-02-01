@@ -55,7 +55,7 @@ export default function SessionEndModal({ billInfo, onClose }) {
 
       navigate("/charging-payment", {
         state: {
-          chargingPaymentId: data.chargingPaymentId,
+          chargingPaymentId: "CA#1230",
           bill: billInfo.bill,
           energy: billInfo.energy,
         },
