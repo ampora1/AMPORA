@@ -57,6 +57,7 @@ export default function SessionEndModal({ billInfo, onClose }) {
         state: {
           chargingPaymentId: data.chargingPaymentId,
           bill: billInfo.bill,
+          energy: billInfo.energy,
         },
       });
 
