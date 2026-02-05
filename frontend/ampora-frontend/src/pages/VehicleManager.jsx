@@ -14,7 +14,14 @@ import {
   FiCpu,
   FiBattery,
   FiStar,
+  FiUser,
+  FiCalendar,
+  FiCreditCard,
+  FiZap,
+  FiLogOut,
 } from "react-icons/fi";
+import { LuCar } from "react-icons/lu";
+import SideNav from "../components/dashboard/SideNav";
 
 const API_BASE = "https://ampora.dev";
 const glass =
@@ -52,7 +59,14 @@ const VehicleManager = () => {
   const [brands, setBrands] = useState([]);
   const [models, setModels] = useState([]); // all or filtered by brand for dropdown
   const [loading, setLoading] = useState(true);
-
+  const quickActions = [
+    { title: "User Details", icon: <FiUser />, to: "/profile" },
+    { title: "Vehicle Details", icon: <LuCar />, to: "/vehicles" },
+    { title: "Bookings", icon: <FiCalendar />, to: "/bookings" },
+    { title: "Plans & Subscription", icon: <FiCreditCard />, to: "/package" },
+    { title: "Charging History", icon: <FiZap />, to: "/history" },
+    { title: "Logout", icon: <FiLogOut />, onClick: logout, to: "/login" },
+  ];
   // UI state
   const [query, setQuery] = useState("");
   const [showAdd, setShowAdd] = useState(false);
@@ -63,9 +77,9 @@ const VehicleManager = () => {
 
   // Logged-in user (from token)
   const token = localStorage.getItem("token") || "";
-  const loggedUserId=localStorage.getItem("userId");
+  const loggedUserId = localStorage.getItem("userId");
   const claims = decodeJWT(token);
-  
+
 
   // ---------- Load Brands + Vehicles on mount ----------
   useEffect(() => {
@@ -93,7 +107,7 @@ const VehicleManager = () => {
         const res = await fetch(`${API_BASE}/api/vehicles/user/${loggedUserId}`, {
           headers: {
             "Content-Type": "application/json",
-            
+
           },
         });
         const data = await res.json();
@@ -315,66 +329,69 @@ const VehicleManager = () => {
 
   // For now, keep edit/delete local if you don't have PUT/DELETE
   async function saveEdit() {
-  if (!validate() || !showEdit) return;
+    if (!validate() || !showEdit) return;
 
-  try {
-    const payload = {
-      userId: loggedUserId,
-      brand_id: form.brandId,
-      model_id: form.modelId,
-      plate: form.plate.trim(),
-      rangeKm: Number(form.rangeKm),
-      connectorType: form.connector.trim(),
-      variant: form.variant.trim(),
-    };
+    try {
+      const payload = {
+        userId: loggedUserId,
+        brand_id: form.brandId,
+        model_id: form.modelId,
+        plate: form.plate.trim(),
+        rangeKm: Number(form.rangeKm),
+        connectorType: form.connector.trim(),
+        variant: form.variant.trim(),
+      };
 
-    const res = await fetch(`${API_BASE}/api/vehicles/${showEdit.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
+      const res = await fetch(`${API_BASE}/api/vehicles/${showEdit.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
 
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(txt || "Failed to update vehicle");
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || "Failed to update vehicle");
+      }
+
+      // Reload list
+      await reloadVehicles();
+      setShowEdit(null);
+    } catch (e) {
+      console.error(e);
+      alert("Error updating vehicle. Check console.");
     }
-
-    // Reload list
-    await reloadVehicles();
-    setShowEdit(null);
-  } catch (e) {
-    console.error(e);
-    alert("Error updating vehicle. Check console.");
   }
-}
 
   async function confirmDelete() {
-  if (!showDelete) return;
+    if (!showDelete) return;
 
-  try {
-    const res = await fetch(`${API_BASE}/api/vehicles/${showDelete.id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+      const res = await fetch(`${API_BASE}/api/vehicles/${showDelete.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(txt || "Failed to delete vehicle");
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || "Failed to delete vehicle");
+      }
+
+      await reloadVehicles();
+      setShowDelete(null);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to delete. See console.");
     }
-
-    await reloadVehicles();
-    setShowDelete(null);
-  } catch (e) {
-    console.error(e);
-    alert("Failed to delete. See console.");
   }
-}
-
+  function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  }
 
   function makeDefault(id) {
     setVehicles((s) => s.map((v) => ({ ...v, isDefault: v.id === id })));
@@ -382,210 +399,226 @@ const VehicleManager = () => {
 
   // ---------- UI ----------
   return (
-    <div className="w-screen min-h-screen mt-20 bg-gradient-to-b from-emerald-50 via-teal-50 to-white text-gray-900">
-      {/* Header */}
-      <div className="mx-auto w-11/12 max-w-7xl pt-10 pb-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-emerald-700">
-              My Vehicles
-            </h1>
-            <p className="text-emerald-900/70">
-              Add, edit, set default, and manage your EVs for smarter trip planning.
-            </p>
-          </div>
+  <div className="w-screen min-h-screen mt-20 bg-gradient-to-b from-emerald-50 via-teal-50 to-white text-gray-900">
+    <div className="mx-auto w-11/12 max-w-7xl pt-10 pb-6">
 
-          <div className="flex gap-3">
-            <div className={`${glass} rounded-2xl px-4 py-2 flex items-center gap-2`}>
-              <FiSearch className="text-emerald-600" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search brand, model, plate…"
-                className="bg-transparent outline-none text-sm text-emerald-900 placeholder-emerald-900/60"
-              />
-            </div>
-            <button
-              onClick={openAdd}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold shadow hover:shadow-lg"
-            >
-              <FiPlus /> Add Vehicle
-            </button>
-          </div>
+      <div className="flex flex-col lg:flex-row gap-6">
+
+        {/* Sidebar */}
+        <div className="w-full lg:w-[260px] lg:sticky lg:top-24 self-start">
+          <SideNav actions={quickActions} />
         </div>
-      </div>
 
-      {/* Default vehicle pill */}
-      {vehicles.length > 0 && !loading && (
-        <div className="mx-auto w-11/12 max-w-7xl">
-          <div className={`${glass} rounded-2xl p-4 flex items-center justify-between`}>
-            <div className="flex items-center gap-3">
-              <span className="grid place-items-center w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600">
-                <FiStar />
-              </span>
-              <div>
-                <p className="text-sm text-emerald-900/70">Default vehicle</p>
-                <p className="font-semibold text-emerald-800">
-                  {(
-                    vehicles.find((v) => v.isDefault) ||
-                    vehicles[0] || { brand: "-", model: "-", variant: "-", plate: "-" }
-                  ).brand}{" "}
-                  {(
-                    vehicles.find((v) => v.isDefault) ||
-                    vehicles[0] || { brand: "-", model: "-", variant: "-", plate: "-" }
-                  ).model}{" "}
-                  • {(
-                    vehicles.find((v) => v.isDefault) ||
-                    vehicles[0] || { brand: "-", model: "-", variant: "-", plate: "-" }
-                  ).variant}{" "}
-                  · {(
-                    vehicles.find((v) => v.isDefault) ||
-                    vehicles[0] || { brand: "-", model: "-", variant: "-", plate: "-" }
-                  ).plate}
-                </p>
+        {/* Main Content */}
+        <div className="flex-1">
+
+          {/* Header */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-extrabold text-emerald-700">
+                My Vehicles
+              </h1>
+              <p className="text-emerald-900/70">
+                Add, edit, set default, and manage your EVs for smarter trip planning.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <div className={`${glass} rounded-2xl px-4 py-2 flex items-center gap-2`}>
+                <FiSearch className="text-emerald-600" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search brand, model, plate…"
+                  className="bg-transparent outline-none text-sm text-emerald-900 placeholder-emerald-900/60"
+                />
               </div>
-            </div>
-            <a
-              href="/trip"
-              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-            >
-              Plan with default <FiChevronRight />
-            </a>
-          </div>
-        </div>
-      )}
 
-      {/* Grid list */}
-      <div className="mx-auto w-11/12 max-w-7xl py-8">
-        {loading ? (
-          <motion.div
-            variants={fade}
-            initial="hidden"
-            animate="show"
-            className={`${glass} rounded-2xl p-10 text-center`}
-          >
-            <p className="text-emerald-900/70">Loading your vehicles…</p>
-          </motion.div>
-        ) : filtered.length === 0 ? (
-          <motion.div
-            variants={fade}
-            initial="hidden"
-            animate="show"
-            className={`${glass} rounded-2xl p-10 text-center`}
-          >
-            <p className="text-emerald-900/70">
-              No vehicles found. Try a different search or add a new vehicle.
-            </p>
-          </motion.div>
-        ) : (
-          <motion.div
-            variants={fade}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-          >
-            {filtered.map((v) => (
-              <div key={v.id} className={`${glass} rounded-2xl p-6`}>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="grid place-items-center w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 text-lg">
-                      <FiCpu />
-                    </span>
-                    <div>
-                      <p className="font-semibold text-emerald-900">
-                        {v.brand || "—"} {v.model || ""}
-                      </p>
-                      <p className="text-xs text-emerald-900/70">{v.variant || "—"}Kwh</p>
+              <button
+                onClick={openAdd}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold shadow hover:shadow-lg"
+              >
+                <FiPlus /> Add Vehicle
+              </button>
+            </div>
+          </div>
+
+          {/* Default vehicle pill */}
+          {vehicles.length > 0 && !loading && (
+            <div className={`${glass} rounded-2xl p-4 flex items-center justify-between mt-6`}>
+              <div className="flex items-center gap-3">
+                <span className="grid place-items-center w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600">
+                  <FiStar />
+                </span>
+                <div>
+                  <p className="text-sm text-emerald-900/70">Default vehicle</p>
+                  <p className="font-semibold text-emerald-800">
+                    {(
+                      vehicles.find((v) => v.isDefault) ||
+                      vehicles[0] || { brand: "-", model: "-", variant: "-", plate: "-" }
+                    ).brand}{" "}
+                    {(
+                      vehicles.find((v) => v.isDefault) ||
+                      vehicles[0] || { brand: "-", model: "-", variant: "-", plate: "-" }
+                    ).model}{" "}
+                    • {(
+                      vehicles.find((v) => v.isDefault) ||
+                      vehicles[0] || { brand: "-", model: "-", variant: "-", plate: "-" }
+                    ).variant}{" "}
+                    · {(
+                      vehicles.find((v) => v.isDefault) ||
+                      vehicles[0] || { brand: "-", model: "-", variant: "-", plate: "-" }
+                    ).plate}
+                  </p>
+                </div>
+              </div>
+
+              <a
+                href="/trip"
+                className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+              >
+                Plan with default <FiChevronRight />
+              </a>
+            </div>
+          )}
+
+          {/* Vehicle Grid */}
+          <div className="py-8">
+            {loading ? (
+              <motion.div
+                variants={fade}
+                initial="hidden"
+                animate="show"
+                className={`${glass} rounded-2xl p-10 text-center`}
+              >
+                <p className="text-emerald-900/70">Loading your vehicles…</p>
+              </motion.div>
+            ) : filtered.length === 0 ? (
+              <motion.div
+                variants={fade}
+                initial="hidden"
+                animate="show"
+                className={`${glass} rounded-2xl p-10 text-center`}
+              >
+                <p className="text-emerald-900/70">
+                  No vehicles found. Try a different search or add a new vehicle.
+                </p>
+              </motion.div>
+            ) : (
+              <motion.div
+                variants={fade}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+              >
+                {filtered.map((v) => (
+                  <div key={v.id} className={`${glass} rounded-2xl p-6`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="grid place-items-center w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 text-lg">
+                          <FiCpu />
+                        </span>
+                        <div>
+                          <p className="font-semibold text-emerald-900">
+                            {v.brand || "—"} {v.model || ""}
+                          </p>
+                          <p className="text-xs text-emerald-900/70">
+                            {v.variant ? `${v.variant} kWh` : "—"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {v.isDefault ? (
+                        <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">
+                          <FiStar className="shrink-0" /> Default
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => makeDefault(v.id)}
+                          className="text-xs px-2 py-1 rounded-full border border-emerald-300 text-emerald-500 hover:bg-emerald-50"
+                        >
+                          Set default
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                      <InfoRow icon={<FiTag />} label="Plate" value={v.plate || "—"} />
+                      <InfoRow icon={<FiBattery />} label="Range" value={`${v.rangeKm ?? 0} km`} />
+                      <InfoRow icon={<FiSettings />} label="Connector" value={v.connector || "—"} />
+                      <InfoRow icon={<FiMapPin />} label="Used in Trip Planner" value={v.isDefault ? "Yes" : "No"} />
+                    </div>
+
+                    <div className="mt-5 flex items-center gap-3">
+                      <button
+                        onClick={() => openEdit(v)}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+                      >
+                        <FiEdit2 /> Edit
+                      </button>
+
+                      <button
+                        onClick={() => setShowDelete(v)}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                      >
+                        <FiTrash2 /> Delete
+                      </button>
                     </div>
                   </div>
+                ))}
+              </motion.div>
+            )}
+          </div>
 
-                  {v.isDefault ? (
-                    <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">
-                      <FiStar className="shrink-0" /> Default
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => makeDefault(v.id)}
-                      className="text-xs px-2 py-1 rounded-full border border-emerald-300 text-emerald-500 hover:bg-emerald-50"
-                    >
-                      Set default
-                    </button>
-                  )}
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                  <InfoRow icon={<FiTag />} label="Plate" value={v.plate || "—"} />
-                  <InfoRow icon={<FiBattery />} label="Range" value={`${v.rangeKm ?? 0} km`} />
-                  <InfoRow icon={<FiSettings />} label="Connector" value={v.connector || "—"} />
-                  <InfoRow icon={<FiMapPin />} label="Used in Trip Planner" value={v.isDefault ? "Yes" : "No"} />
-                </div>
-
-                <div className="mt-5 flex items-center gap-3">
-                  <button
-                    onClick={() => openEdit(v)}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
-                  >
-                    <FiEdit2 /> Edit
-                  </button>
-                  <div
-                    onClick={() => setShowDelete(v)}
-                    className="inline-flex cursor-pointer items-center gap-2 px-3 py-2 rounded-lg border bg-red-700 border-emerald-300 text-white hover:bg-red-800"
-                  >
-                    <FiTrash2 /> Delete
-                  </div>
-                </div>
-              </div>
-            ))}
-          </motion.div>
-        )}
+        </div>
       </div>
-
-      {/* ---------- Add Modal ---------- */}
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add Vehicle">
-        <VehicleForm
-          form={form}
-          setForm={setForm}
-          errors={errors}
-          brands={brands}
-          models={models}
-          onSubmit={addVehicle}
-          submitText="Add Vehicle"
-          onBrandChange={(id) => setForm((f) => ({ ...f, brandId: id, modelId: "", brand: "", model: "" }))}
-          onModelChange={(id) => setForm((f) => ({ ...f, modelId: id }))}
-        />
-      </Modal>
-
-      {/* ---------- Edit Modal ---------- */}
-      <Modal open={!!showEdit} onClose={() => setShowEdit(null)} title="Edit Vehicle">
-        <VehicleForm
-          form={form}
-          setForm={setForm}
-          errors={errors}
-          brands={brands}
-          models={models}
-          onSubmit={saveEdit}
-          submitText="Save Changes"
-          onBrandChange={(id) => setForm((f) => ({ ...f, brandId: id, modelId: "", brand: "", model: "" }))}
-          onModelChange={(id) => setForm((f) => ({ ...f, modelId: id }))}
-        />
-      </Modal>
-
-      {/* ---------- Delete Confirm ---------- */}
-      <ConfirmDialog
-        open={!!showDelete}
-        title="Delete vehicle?"
-        message={
-          showDelete
-            ? `Are you sure you want to delete ${showDelete.brand || ""} ${showDelete.model || ""} (${showDelete.plate || ""})?`
-            : ""
-        }
-        confirmText="Delete"
-        cancelText="Cancel"
-        onCancel={() => setShowDelete(null)}
-        onConfirm={confirmDelete}
-      />
     </div>
-  );
+
+    {/* Modals */}
+    <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add Vehicle">
+      <VehicleForm
+        form={form}
+        setForm={setForm}
+        errors={errors}
+        brands={brands}
+        models={models}
+        onSubmit={addVehicle}
+        submitText="Add Vehicle"
+        onBrandChange={(id) => setForm((f) => ({ ...f, brandId: id, modelId: "" }))}
+        onModelChange={(id) => setForm((f) => ({ ...f, modelId: id }))}
+      />
+    </Modal>
+
+    <Modal open={!!showEdit} onClose={() => setShowEdit(null)} title="Edit Vehicle">
+      <VehicleForm
+        form={form}
+        setForm={setForm}
+        errors={errors}
+        brands={brands}
+        models={models}
+        onSubmit={saveEdit}
+        submitText="Save Changes"
+        onBrandChange={(id) => setForm((f) => ({ ...f, brandId: id, modelId: "" }))}
+        onModelChange={(id) => setForm((f) => ({ ...f, modelId: id }))}
+      />
+    </Modal>
+
+    <ConfirmDialog
+      open={!!showDelete}
+      title="Delete vehicle?"
+      message={
+        showDelete
+          ? `Are you sure you want to delete ${showDelete.brand} ${showDelete.model} (${showDelete.plate})?`
+          : ""
+      }
+      confirmText="Delete"
+      cancelText="Cancel"
+      onCancel={() => setShowDelete(null)}
+      onConfirm={confirmDelete}
+    />
+  </div>
+);
+
 };
 
 const InfoRow = ({ icon, label, value }) => (

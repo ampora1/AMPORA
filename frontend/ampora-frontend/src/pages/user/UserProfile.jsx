@@ -52,7 +52,7 @@ const userId = localStorage.getItem("userId");
 
   function logoutFunction() {
     localStorage.removeItem("token");
-    window.location.href = "/";
+    window.location.href = "/login";
   }
 
   const quickActions = [
@@ -61,7 +61,7 @@ const userId = localStorage.getItem("userId");
     { title: "Bookings", icon: <FiCalendar />, to: "/bookings" },
     { title: "Plans & Subscription", icon: <FiCreditCard />, to: "/package" },
     { title: "Charging History", icon: <FiZap />, to: "/history" },
-    { title: "Logout", icon: <FiLogOut />, onClick: logoutFunction, to: "/" },
+    { title: "Logout", icon: <FiLogOut />, onClick: logoutFunction, to: "/login" },
   ];
 
   const handleChange = (e) =>

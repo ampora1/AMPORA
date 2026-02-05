@@ -58,7 +58,7 @@ export default function ChargingHistory() {
   function logoutFunction() {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
-    window.location.href = "/";
+    window.location.href = "/login";
   }
 
   const quickActions = [
@@ -67,7 +67,7 @@ export default function ChargingHistory() {
     { title: "Bookings", icon: <FiCalendar />, to: "/bookings" },
     { title: "Plans & Subscription", icon: <FiCreditCard />, to: "/package" },
     { title: "Charging History", icon: <FiZap />, to: "/history" },
-    { title: "Logout", icon: <FiLogOut />, onClick: logoutFunction, to: "/" },
+    { title: "Logout", icon: <FiLogOut />, onClick: logoutFunction, to: "/login" },
   ];
 
   if (loading) {

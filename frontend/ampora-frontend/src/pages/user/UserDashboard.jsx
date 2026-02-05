@@ -78,14 +78,17 @@ export default function UserDashboard() {
       </div>
     );
   }
-
+function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  }
   const quickActions = [
     { title: "Profile", icon: <FiUser />, to: "/profile" },
     { title: "Vehicles", icon: <LuCar />, to: "/vehicles" },
     { title: "Bookings", icon: <FiCalendar />, to: "/bookings" },
     { title: "Payments", icon: <FiCreditCard />, to: "/package" },
     { title: "Charging History", icon: <FiZap />, to: "/history" },
-    { title: "Logout", icon: <FiLogOut />, onClick: logout, to: "/" },
+    { title: "Logout", icon: <FiLogOut />, onClick: logout, to: "/login" },
   ];
 
   const selectedVehicle = vehicles[0];
