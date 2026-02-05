@@ -23,7 +23,7 @@ export default function UserProfile() {
     phone: "",
     address: "",
   });
-
+const userId = localStorage.getItem("userId");
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function UserProfile() {
 
   async function fetchUserData() {
     const res = await fetch(
-      "https://ampora.dev/api/users/32389639-de6e-464a-afc9-d18060391373"
+      `https://ampora.dev/api/users/${userId}`
     );
     const data = await res.json();
     setUser(data);
@@ -40,7 +40,7 @@ export default function UserProfile() {
 
   async function updateFunction() {
     const resp = await fetch(
-      "https://ampora.dev/api/users/32389639-de6e-464a-afc9-d18060391373",
+      `https://ampora.dev/api/users/${userId}`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
