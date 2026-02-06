@@ -13,9 +13,9 @@ export default function useChargingSocket() {
   const [connected, setConnected] = useState(false);
   const [sessionEnded, setSessionEnded] = useState(false);
   const [billInfo, setBillInfo] = useState(null);
-
+const userId = localStorage.getItem("userId");
   useEffect(() => {
-    const WS_URL = "wss://ampora.dev/ws/charging";
+    const WS_URL = `wss://ampora.dev/ws/charging?userId=${userId}`;
     wsRef.current = new WebSocket(WS_URL);
 
     wsRef.current.onopen = () => setConnected(true);
