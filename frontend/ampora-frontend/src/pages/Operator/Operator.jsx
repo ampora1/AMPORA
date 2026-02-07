@@ -94,7 +94,7 @@ export default function OperatorPremium() {
       ...prev.slice(-9),
       {
         time: new Date().toLocaleTimeString(),
-        kW: liveData.current   // or power if you prefer
+        kW: liveData.power / 1000,
       }
     ]);
   }, [liveData]);
