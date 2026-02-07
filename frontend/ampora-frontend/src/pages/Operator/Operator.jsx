@@ -16,6 +16,8 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
+import useOperatorSocket from "./useOperatorSocket";
+
 
 /* ---------------- MOCK DATA ---------------- */
 
@@ -24,6 +26,7 @@ const makeEnergySeries = () =>
     time: i === 7 ? "Now" : `${(7 - i) * 10}s`,
     kW: 120 + Math.random() * 80,
   }));
+
 
 const liveSessions = [
   {
@@ -79,30 +82,33 @@ export default function OperatorPremium() {
   const [series, setSeries] = useState(makeEnergySeries);
   const [chatOpen, setChatOpen] = useState(false);
   const [message, setMessage] = useState("");
-const [messages, setMessages] = useState([
-  { from: "admin", text: "Hello Operator, how can we help?" },
-]);
-
+  const [messages, setMessages] = useState([
+    { from: "admin", text: "Hello Operator, how can we help?" },
+  ]);
+  const liveData = useOperatorSocket();
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setSeries((s) => [
-        ...s.slice(1),
-        { time: "Now", kW: 120 + Math.random() * 90 },
-      ]);
-    }, 10000);
-    return () => clearInterval(id);
-  }, []);
+    if (!liveData) return;
+
+    setSeries((prev) => [
+      ...prev.slice(-9),
+      {
+        time: new Date().toLocaleTimeString(),
+        kW: liveData.current   // or power if you prefer
+      }
+    ]);
+  }, [liveData]);
+
   const handleSend = () => {
-  if (message.trim() === "") return;
+    if (message.trim() === "") return;
 
-  setMessages((oldMessages) => [
-    ...oldMessages,
-    { from: "operator", text: message },
-  ]);
+    setMessages((oldMessages) => [
+      ...oldMessages,
+      { from: "operator", text: message },
+    ]);
 
-  setMessage("");
-};
+    setMessage("");
+  };
 
 
   const kpis = useMemo(
@@ -183,64 +189,63 @@ const [messages, setMessages] = useState([
           >
             <div className="bg-emerald-500 text-white p-4 rounded-t-2xl flex justify-between">
               <strong>Admin Support</strong>
-             <button
-  onClick={() => setChatOpen(false)}
-  className="!w-8 !h-8 !flex !items-center !justify-center !rounded-full 
+              <button
+                onClick={() => setChatOpen(false)}
+                className="!w-8 !h-8 !flex !items-center !justify-center !rounded-full 
              !bg-white/20 !text-white !text-lg 
              hover:!bg-white/30 transition"
->
-  ✕
-</button>
+              >
+                ✕
+              </button>
 
             </div>
 
             <div className="flex-1 p-4 space-y-2 overflow-y-auto text-sm">
-  {messages.map((msg, index) => (
-    <div
-      key={index}
-      className={`p-2 rounded-lg max-w-[75%] ${
-        msg.from === "operator"
-          ? "ml-auto bg-emerald-500 text-white"
-          : "bg-slate-100 text-slate-700"
-      }`}
-    >
-      {msg.text}
-    </div>
-  ))}
-</div>
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`p-2 rounded-lg max-w-[75%] ${msg.from === "operator"
+                      ? "ml-auto bg-emerald-500 text-white"
+                      : "bg-slate-100 text-slate-700"
+                    }`}
+                >
+                  {msg.text}
+                </div>
+              ))}
+            </div>
 
-            
-            
-            
-            
+
+
+
+
 
             <div className="p-3 border-t flex gap-2">
-             
-             <input
-  value={message}
-  onChange={(e) => setMessage(e.target.value)}
-  onKeyDown={(e) => e.key === "Enter" && handleSend()}
-  className="flex-1 border rounded-lg px-3 py-2 text-sm"
-  placeholder="Type message..."
-/>
 
-             
-             
-
-
-<button
-  onClick={handleSend}
-  className="!bg-emerald-500 !text-white !px-4 !py-2 !rounded-lg hover:!bg-emerald-600"
->
-  Send
-</button>
+              <input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                className="flex-1 border rounded-lg px-3 py-2 text-sm"
+                placeholder="Type message..."
+              />
 
 
 
 
 
-            
-              
+              <button
+                onClick={handleSend}
+                className="!bg-emerald-500 !text-white !px-4 !py-2 !rounded-lg hover:!bg-emerald-600"
+              >
+                Send
+              </button>
+
+
+
+
+
+
+
             </div>
           </motion.div>
         )}
@@ -279,7 +284,7 @@ function EnergyChart({ series }) {
           <Line dataKey="kW" stroke="#10b981" strokeWidth={3} />
         </LineChart>
       </ResponsiveContainer>
-      
+
     </div>
   );
 }
@@ -301,11 +306,10 @@ function LiveSessions() {
             <div className="text-right">
               <div className="text-sm">{s.power}</div>
               <span
-                className={`text-xs px-2 py-1 rounded-full ${
-                  s.status === "Charging"
+                className={`text-xs px-2 py-1 rounded-full ${s.status === "Charging"
                     ? "bg-emerald-100 text-emerald-700"
                     : "bg-amber-100 text-amber-700"
-                }`}
+                  }`}
               >
                 {s.status}
               </span>
@@ -359,11 +363,10 @@ function UpcomingBookings() {
                   <div className="font-medium">{b.customer}</div>
                   <div className="text-xs text-slate-500">{b.phone}</div>
                   <span
-                    className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs ${
-                      b.tier === "Premium"
+                    className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs ${b.tier === "Premium"
                         ? "bg-indigo-100 text-indigo-700"
                         : "bg-slate-100 text-slate-700"
-                    }`}
+                      }`}
                   >
                     {b.tier}
                   </span>
@@ -388,11 +391,10 @@ function UpcomingBookings() {
 
                 <td>
                   <span
-                    className={`px-3 py-1 rounded-full text-xs ${
-                      b.status === "Confirmed"
+                    className={`px-3 py-1 rounded-full text-xs ${b.status === "Confirmed"
                         ? "bg-emerald-100 text-emerald-700"
                         : "bg-amber-100 text-amber-700"
-                    }`}
+                      }`}
                   >
                     {b.status}
                   </span>
