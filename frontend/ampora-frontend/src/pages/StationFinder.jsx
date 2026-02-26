@@ -42,13 +42,30 @@ export default function StationFinder() {
 
   /* Booking */
   const [bookingDate, setBookingDate] = useState(null);
-  const [bookingTime, setBookingTime] = useState("");
+  // const [bookingTime, setBookingTime] = useState("");
   const [duration, setDuration] = useState(1);
-  const [availability, setAvailability] = useState(null);
+  // const [availability, setAvailability] = useState(null);
+  const [bookings, setBookings] = useState([]);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   // 🔎 Filters
   const [chargerTypeFilter, setChargerTypeFilter] = useState("ALL");
   const [minPowerFilter, setMinPowerFilter] = useState(0);
-
+  const timeSlots = [
+    "08:00",
+    "09:00",
+    "10:00",
+    "11:00",
+    "12:00",
+    "13:00",
+    "14:00",
+    "15:00",
+    "16:00",
+    "17:00",
+    "18:00",
+    "19:00",
+    "20:00"
+  ];
   const navigate = useNavigate();
   const userId = localStorage.getItem("userId");
 
@@ -62,11 +79,91 @@ export default function StationFinder() {
     lat: 6.9271,
     lng: 79.8612,
   });
+  function isBooked(time) {
+
+    return bookings.some(b => {
+
+      return time >= b.startTime && time < b.endTime;
+
+    });
+
+  }
+  function isBooked(time) {
+
+    if (!Array.isArray(bookings))
+      return false;
+
+    const slotHour =
+      parseInt(time.split(":")[0]);
+
+    return bookings.some(b => {
+
+      if (!b.startTime || !b.endTime)
+        return false;
+
+      const start =
+        parseInt(b.startTime.split(":")[0]);
+
+      const end =
+        parseInt(b.endTime.split(":")[0]);
+
+      return slotHour >= start &&
+        slotHour < end;
+
+    });
+
+  }
+  useEffect(() => {
+
+    if (!bookingDate || !selectedCharger) return;
+
+    loadBookings();
+
+  }, [bookingDate, selectedCharger]);
   useEffect(() => {
     const filtered = applyFilters(stations);
     setFilteredStations(filtered);
   }, [chargerTypeFilter, minPowerFilter, stations]);
 
+
+  async function loadBookings() {
+
+    try {
+
+      setLoadingSlots(true);
+
+      const dateStr =
+        bookingDate.toISOString().split("T")[0];
+
+      const res = await fetch(
+        `${API_BASE}/api/bookings/charger/${selectedCharger.id}/date/${dateStr}`
+      );
+
+      const data = await res.json();
+
+      console.log("BOOKINGS RESPONSE:", data);
+
+      // Ensure array
+      if (Array.isArray(data)) {
+        setBookings(data);
+      }
+      else if (Array.isArray(data.bookings)) {
+        setBookings(data.bookings);
+      }
+      else {
+        setBookings([]);
+      }
+
+    } catch (err) {
+
+      console.error(err);
+      setBookings([]);
+
+    }
+
+    setLoadingSlots(false);
+
+  }
   useEffect(() => {
     async function loadStations() {
       try {
@@ -242,7 +339,29 @@ export default function StationFinder() {
               className="w-full p-3 rounded-xl outline-none"
               placeholder="Search your area…"
               value={searchPlace}
-              onChange={(e) => setSearchPlace(e.target.value)}
+
+              onChange={(e) => {
+
+                const value = e.target.value;
+
+                setSearchPlace(value);
+
+                // If user clears search → show all stations again
+                if (value.trim() === "") {
+
+                  setFilteredStations(
+                    applyFilters(stations)
+                  );
+
+                  // Reset map center to default Colombo
+                  setMapCenter({
+                    lat: 6.9271,
+                    lng: 79.8612
+                  });
+
+                }
+
+              }}
             />
           </Autocomplete>
         </div>
@@ -400,141 +519,205 @@ export default function StationFinder() {
 
 
       {selectedStation && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm
-                        flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md">
-            <StationCard
-              station={selectedStation}
-              selectedCharger={selectedCharger}
-              onSelectCharger={setSelectedCharger}
-            />
+  <div className="
+  fixed inset-0
+  bg-black/40 backdrop-blur-sm
+  flex items-center justify-center
+  z-50
+  px-3 py-6
+  overflow-y-auto
+  ">
 
-            <h3 className="text-xl font-bold text-emerald-700 mt-4">
-              Book Charging Slot
-            </h3>
+    <div className="
+    bg-white
+    rounded-3xl
+    shadow-2xl
+    p-6
+    w-full
+    max-w-md
 
-            <DatePicker
-              selected={bookingDate}
-              onChange={setBookingDate}
-              minDate={new Date()}
-              className="w-full p-2 border rounded mt-2"
-              placeholderText="Select Date"
-            />
+    max-h-[92vh]
+    overflow-y-auto
+    ">
 
-            <input
-              type="time"
-              className="w-full p-2 border rounded mt-2"
-              value={bookingTime}
-              onChange={(e) => setBookingTime(e.target.value)}
-              placeholder="Select Time"
-            />
+      <StationCard
+        station={selectedStation}
+        selectedCharger={selectedCharger}
+        onSelectCharger={setSelectedCharger}
+      />
 
-            <select
-              className="w-full p-2 border rounded mt-2"
-              value={duration}
-              onChange={(e) => setDuration(Number(e.target.value))}
-            >
-              <option >Select Time slot</option>
-              <option value={1}>1 hour</option>
-              <option value={2}>2 hours</option>
-              <option value={3}>3 hours</option>
-            </select>
+      <h3 className="text-xl font-bold text-emerald-700 mt-4">
+        Book Charging Slot
+      </h3>
 
-            {availability !== null && (
-              <p
-                className={`mt-3 font-bold ${availability ? "text-green-600" : "text-red-600"
-                  }`}
-              >
-                {availability ? "Slot available ✔" : "Slot unavailable ✖"}
-              </p>
-            )}
 
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={checkAvailability}
-                className="flex-1 bg-emerald-500 text-white py-2 rounded-xl"
-              >
-                Check
-              </button>
-              <button
-                disabled={!selectedCharger || availability !== true}
-                onClick={async () => {
-                  if (!bookingDate || !bookingTime || !selectedCharger) {
-                    alert("Please select date, time, and charger");
-                    return;
-                  }
-                  const [hh, mm] = bookingTime.split(":").map(Number);
+      {/* Date Picker */}
+      <DatePicker
+        selected={bookingDate}
+        onChange={(date)=>{
+          setBookingDate(date);
+          setSelectedSlot(null);
+        }}
+        minDate={new Date()}
+        className="w-full p-2 border rounded mt-2"
+        placeholderText="Select Date"
+      />
 
-                  const start = new Date();
-                  start.setHours(hh, mm, 0, 0);
 
-                  const end = new Date(start);
-                  end.setHours(end.getHours() + duration);
+      {/* Duration */}
+      <select
+        className="w-full p-2 border rounded mt-2"
+        value={duration}
+        onChange={(e)=>setDuration(Number(e.target.value))}
+      >
+        <option value={1}>1 hour</option>
+        <option value={2}>2 hours</option>
+        <option value={3}>3 hours</option>
+      </select>
 
-                  const endTime = end.toTimeString().slice(0, 5);
-                  try {
-                    console.log("Creating pending booking...");
 
-                    const res = await fetch(
-                      `${API_BASE}/api/payment/pending`,
-                      {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          userId,
-                          chargerId: selectedCharger.id,
-                          date: bookingDate.toISOString().split("T")[0],
-                          startTime: bookingTime,
-                          endTime: endTime,
-                          duration: duration,
-                          amount: 300,
-                        }),
-                      }
-                    );
+      {/* Slot Section */}
+      <h4 className="mt-4 font-semibold">
+        Select Time Slot
+      </h4>
 
-                    if (!res.ok) {
-                      const errText = await res.text();
-                      console.error("Pending booking failed:", errText);
-                      alert("Booking creation failed");
-                      return;
-                    }
-
-                    const data = await res.json();
-                    console.log("Pending booking response:", data);
-
-                    if (!data.bookingId) {
-                      alert("Booking ID not returned");
-                      return;
-                    }
-
-                    navigate("/payments", {
-                      state: {
-                        bookingId: data.bookingId,
-                        bill: 300,
-                      },
-                    });
-
-                  } catch (err) {
-                    console.error("Pending booking error:", err);
-                    alert("Something went wrong");
-                  }
-                }}
-
-                className="flex-1 bg-emerald-500 text-white py-2 rounded-xl"
-              >
-                Proceed to Payment
-              </button>
-            </div>
-
-            <button
-              className="mt-4 w-full bg-gray-200 py-2 rounded-xl"
-              onClick={() => setSelectedStation(null)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
+      {!selectedCharger && (
+        <p className="text-gray-500 text-sm mt-1">
+          Select a charger first
+        </p>
       )}
+
+      {loadingSlots && (
+        <p className="text-gray-500 mt-2">
+          Loading slots...
+        </p>
+      )}
+
+
+      {/* Slot Grid */}
+      <div className="
+      grid
+      grid-cols-3 sm:grid-cols-4
+      gap-2
+      mt-3
+      ">
+
+        {timeSlots.map(time=>{
+
+          const booked=isBooked(time);
+
+          return(
+            <button
+              key={time}
+              disabled={!selectedCharger||booked}
+              onClick={()=>setSelectedSlot(time)}
+
+              className={`p-2 rounded-lg text-sm font-semibold
+
+              ${booked
+                ? "bg-red-200 text-red-700 cursor-not-allowed"
+                : selectedSlot===time
+                ? "bg-emerald-500 text-white"
+                : "bg-gray-100 hover:bg-gray-200"
+              }
+              `}
+            >
+              {time}
+            </button>
+          );
+
+        })}
+
+      </div>
+
+
+      {/* Booking Button */}
+      <div className="flex gap-3 mt-5">
+
+        <button
+          disabled={
+            !selectedCharger ||
+            !selectedSlot ||
+            !bookingDate
+          }
+
+          onClick={async()=>{
+
+            const [hh,mm]=selectedSlot.split(":").map(Number);
+
+            const start=new Date();
+            start.setHours(hh,mm,0,0);
+
+            const end=new Date(start);
+            end.setHours(end.getHours()+duration);
+
+            const endTime=end.toTimeString().slice(0,5);
+
+            try{
+
+              const res=await fetch(
+                `${API_BASE}/api/payment/pending`,
+                {
+                  method:"POST",
+                  headers:{ "Content-Type":"application/json"},
+                  body:JSON.stringify({
+                    userId,
+                    chargerId:selectedCharger.id,
+                    date:bookingDate.toISOString().split("T")[0],
+                    startTime:selectedSlot,
+                    endTime:endTime,
+                    duration,
+                    amount:300
+                  })
+                }
+              );
+
+              const data=await res.json();
+
+              navigate("/payments",{
+                state:{
+                  bookingId:data.bookingId,
+                  bill:300
+                }
+              });
+
+            }catch(err){
+              console.error(err);
+              alert("Something went wrong");
+            }
+
+          }}
+
+          className="
+          flex-1
+          bg-emerald-500
+          text-white
+          py-3
+          rounded-xl
+          font-semibold
+          disabled:bg-gray-300
+          "
+        >
+
+          Proceed to Payment
+
+        </button>
+
+      </div>
+
+
+      {/* Close */}
+      <button
+        className="mt-4 w-full bg-gray-200 py-2 rounded-xl"
+        onClick={()=>setSelectedStation(null)}
+      >
+        Close
+      </button>
+
+    </div>
+
+  </div>
+)}
     </div>
   );
 }
