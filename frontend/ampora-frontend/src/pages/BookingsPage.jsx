@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 const API_BASE = "https://ampora.dev";
 const EV_GREEN = "#00d491";
 
-/* ================= STATUS CONFIG ================= */
+
 const STATUS_META = {
   CONFIRMED: {
     label: "Confirmed",
@@ -36,7 +36,7 @@ export default function BookingsPage() {
 
   const userId = localStorage.getItem("userId");
 
-  /* ================= LOAD BOOKINGS ================= */
+
   useEffect(() => {
     async function loadBookings() {
       try {
@@ -57,7 +57,7 @@ export default function BookingsPage() {
   return (
     <div className="min-h-screen mt-7 bg-gradient-to-b from-teal-900 via-emerald-900 to-white pb-20">
 
-      {/* ================= HEADER (PAYMENT STYLE) ================= */}
+     
       <div className="relative h-[32vh] rounded-b-[70px] overflow-hidden
                       bg-gradient-to-tr from-teal-900 via-emerald-800 to-teal-700">
 
@@ -78,7 +78,7 @@ export default function BookingsPage() {
         </div>
       </div>
 
-      {/* ================= INTRO ================= */}
+     
       <div className="max-w-4xl mx-auto mt-10 px-6 text-center">
         <p className="text-lg text-gray-700">
           View all your EV charging reservations in one place.
@@ -86,17 +86,17 @@ export default function BookingsPage() {
         </p>
       </div>
 
-      {/* ================= CONTENT ================= */}
+      
       <div className="mt-12 max-w-7xl mx-auto px-6">
 
-        {/* LOADING */}
+        
         {loading && (
           <p className="text-center text-gray-500">
             Loading your bookings…
           </p>
         )}
 
-        {/* EMPTY */}
+       
         {!loading && bookings.length === 0 && (
           <div className="bg-white rounded-3xl p-10 text-center shadow-xl">
             <p className="text-gray-600">
@@ -105,7 +105,7 @@ export default function BookingsPage() {
           </div>
         )}
 
-        {/* BOOKINGS GRID */}
+       
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {bookings.map((b) => {
             const meta = STATUS_META[b.status] || STATUS_META.PENDING;
@@ -121,7 +121,7 @@ export default function BookingsPage() {
                            border border-emerald-200
                            shadow-[0_25px_70px_rgba(16,185,129,0.18)]"
               >
-                {/* HEADER */}
+              
                 <div className="flex justify-between items-start gap-4">
                   <div>
                     <h2 className="text-2xl font-bold text-emerald-800">
@@ -143,7 +143,7 @@ export default function BookingsPage() {
                   </div>
                 </div>
 
-                {/* INFO GRID */}
+             
                 <div className="grid grid-cols-3 mt-6 text-center">
                   <Info label="Date" value={b.date} />
                   <Info
@@ -160,7 +160,7 @@ export default function BookingsPage() {
                   />
                 </div>
 
-                {/* CHARGER */}
+              
                 <div className="flex items-center mt-5 bg-emerald-50 border
                                 border-emerald-200 rounded-xl p-3">
                   <MdEvStation
@@ -173,7 +173,7 @@ export default function BookingsPage() {
                   </span>
                 </div>
 
-                {/* ACTIONS */}
+              
                 <div className="mt-6 flex justify-end gap-3">
                   <button
                     className="px-4 py-2 rounded-xl text-sm font-medium
@@ -202,7 +202,7 @@ export default function BookingsPage() {
   );
 }
 
-/* ================= SUB COMPONENT ================= */
+
 function Info({ label, value }) {
   return (
     <div>

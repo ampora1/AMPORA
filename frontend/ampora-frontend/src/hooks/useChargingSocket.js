@@ -34,7 +34,7 @@ const userId = localStorage.getItem("userId");
         return;
       }
 
-      /* LIVE DATA */
+     
       if (payload.type === "LIVE") {
         setData(payload);
       }
