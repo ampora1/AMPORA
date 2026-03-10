@@ -86,7 +86,7 @@ def analyze_stations_logic(origin, stations_list, min_wait_hours: float = 0.01):
                 "_distance_m": distance_m,
             })
 
-        # ✅ Sort: smallest wait first, then shortest drive time, then shortest distance
+        #  Sort: smallest wait first, then shortest drive time, then shortest distance
         processed.sort(key=lambda x: (x["_wait_raw"], x["_duration_sec"], x["_distance_m"]))
 
         # Remove helper fields
