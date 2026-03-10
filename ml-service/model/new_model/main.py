@@ -48,11 +48,11 @@ def transform_features(X_df: pd.DataFrame) -> pd.DataFrame:
     return X_copy.drop(["time", "day", "month", "user_type"], axis=1)
 
 
-# ✅ Bind into __main__ so pickle can resolve __main__.transform_features
+# Bind into __main__ so pickle can resolve __main__.transform_features
 import __main__  # noqa
 __main__.transform_features = transform_features
 
-# ✅ Load env
+#  Load env
 load_dotenv()
 
 from fastapi import FastAPI
@@ -102,9 +102,9 @@ def log_json(tag: str, title: str, obj: Any, max_len: int = 1200):
 # ==========================
 try:
     load_model()
-    log("[SRC:ML]", "✅ ML model loaded")
+    log("[SRC:ML]", "ML model loaded")
 except Exception as e:
-    log("[SRC:ML]", f"⚠️ ML model load failed: {e}")
+    log("[SRC:ML]", f" ML model load failed: {e}")
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY", ""))
 
@@ -114,14 +114,14 @@ lc_llm = ChatGroq(
     temperature=0.2,
 )
 
-# ✅ Support both variable names
+# Support both variable names
 GMAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY") or os.getenv("GMAPS_API_KEY") or ""
 if not GMAPS_API_KEY:
     log("[SRC:PLACES]", "⚠️ GOOGLE_MAPS_API_KEY/GMAPS_API_KEY missing -> Google Places disabled")
 
 app = FastAPI()
 
-# ✅ Vite CORS
+#  Vite CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -142,10 +142,10 @@ APP_USER_TYPES = ["Delivery_Driver", "Business_Man", "Casual_Driver", "Tourist"]
 
 
 # ==========================
-# 4) Pydantic Models (MINIMAL change: add station_id)
+# 4) Pydantic Models 
 # ==========================
 class Station(BaseModel):
-    # ✅ frontend might send station_id; if not, we try to resolve by lat/lng/name
+    
     station_id: Optional[str] = None
     name: str
     lat: float
@@ -298,7 +298,7 @@ async def generate_voice_base64(text: str) -> str:
 # ==========================
 def google_places_nearby(lat: float, lng: float, place_type: str, radius_m: int = 2500, keyword: str = "") -> List[dict]:
     if not GMAPS_API_KEY:
-        log("[SRC:PLACES]", "❌ API key missing -> returning empty")
+        log("[SRC:PLACES]", " API key missing -> returning empty")
         return []
 
     url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
@@ -337,7 +337,7 @@ def google_places_nearby(lat: float, lng: float, place_type: str, radius_m: int 
         log_json("[SRC:PLACES]", "sample_results", results[:2])
         return results
     except Exception as e:
-        log("[SRC:PLACES]", f"❌ places request failed: {e}")
+        log("[SRC:PLACES]", f" places request failed: {e}")
         return []
 
 
@@ -498,7 +498,7 @@ runnable = RunnableWithMessageHistory(
 )
 
 # ==========================
-# ✅ Attach chargers + bookings from DB (FIXED)
+#  Attach chargers + bookings from DB (FIXED)
 # ==========================
 def _resolve_missing_station_ids(stations_list: List[dict]) -> None:
     """
@@ -522,7 +522,7 @@ def _resolve_missing_station_ids(stations_list: List[dict]) -> None:
                 if lat is None or lng is None:
                     continue
 
-                # ✅ single query: name fuzzy OR nearest coords
+                #  single query: name fuzzy OR nearest coords
                 try:
                     cur.execute(
                         """
@@ -565,7 +565,7 @@ def attach_chargers_and_bookings(stations_list: List[dict]) -> List[dict]:
     log("[SRC:DB]", f"attach: station_ids={station_ids}")
 
     if not station_ids:
-        log("[SRC:DB]", "attach: ❌ station_ids empty -> cannot attach chargers/bookings")
+        log("[SRC:DB]", "attach:  station_ids empty -> cannot attach chargers/bookings")
         for s in stations_list:
             s["chargers"] = s.get("chargers") or []
         return stations_list
@@ -642,7 +642,7 @@ def attach_chargers_and_bookings(stations_list: List[dict]) -> List[dict]:
 
 
 # ==========================
-# 9) Endpoint: get-nearby-stations (UNCHANGED)
+# 9) Endpoint: get-nearby-stations 
 # ==========================
 @app.post("/get-nearby-stations")
 async def get_nearby_stations(req: NearbyStationsRequest):
@@ -674,7 +674,7 @@ async def get_nearby_stations(req: NearbyStationsRequest):
         log("[SRC:DB]", f"stations_returned={len(rows)}")
         return {"stations": rows}
     except Exception as e:
-        log("[SRC:DB]", f"❌ DB error: {e}")
+        log("[SRC:DB]", f" DB error: {e}")
         return {"stations": [], "error": str(e)}
     finally:
         conn.close()
@@ -725,7 +725,7 @@ async def chat(req: ChatRequest):
 
         stations_list = attach_chargers_and_bookings(stations_list)
 
-        # ✅ EXTRA debug to confirm station_id + chargers attached
+        #  EXTRA debug to confirm station_id + chargers attached
         log("[DBG]", f"station_ids_in_payload={[s.get('station_id') for s in stations_list]}")
         log("[DBG]", f"chargers_per_station={[(s.get('name'), len(s.get('chargers') or [])) for s in stations_list]}")
 
@@ -733,7 +733,7 @@ async def chat(req: ChatRequest):
         best, sorted_list = analyze_stations_logic(origin_val, stations_list)
 
         if not best:
-            assistant_text = "⚠️ I couldn't find a suitable station. Try another route or increase station coverage."
+            assistant_text = " I couldn't find a suitable station. Try another route or increase station coverage."
             store["messages"].append({"role": "ai", "text": assistant_text})
             audio_str = None
             try:
@@ -750,7 +750,7 @@ async def chat(req: ChatRequest):
             )
 
         log("[SRC:GMAPS_DISTANCE]",
-            f"✅ best={best.get('name')} charger={best.get('charger_id')} "
+            f" best={best.get('name')} charger={best.get('charger_id')} "
             f"gap_h={best.get('free_gap_hours')} wait_h={best.get('wait_hours')} "
             f"travel={best.get('travel_time')} dist={best.get('distance')} arrival={best.get('arrival_time')}"
         )
@@ -916,7 +916,7 @@ Reply short and friendly. If you don't have data, say you can't confirm right no
         traceback.print_exc()
         return ChatResponse(
             conversation_id=req.conversation_id,
-            assistant_text="⚠️ Error processing chat. Please try again.",
+            assistant_text=" Error processing chat. Please try again.",
             user_type="Casual_Driver",
             best_station=None,
             sorted_stations=[],
