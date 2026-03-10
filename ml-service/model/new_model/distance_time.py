@@ -63,7 +63,7 @@ def analyze_stations_logic(origin, stations_list, min_wait_hours: float = 0.01):
 
             wait_at_arrival = max(0.0, queue_hrs - trip_time_hrs)
 
-            # ✅ Only keep stations with wait > 0
+            
             if wait_at_arrival < min_wait_hours:
                 continue
 
