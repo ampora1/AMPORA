@@ -63,7 +63,7 @@ def analyze_stations_logic(origin, stations_list, min_wait_hours: float = 0.01):
 
             wait_at_arrival = max(0.0, queue_hrs - trip_time_hrs)
 
-            # ✅ Only keep stations with wait > 0
+            
             if wait_at_arrival < min_wait_hours:
                 continue
 
@@ -86,7 +86,7 @@ def analyze_stations_logic(origin, stations_list, min_wait_hours: float = 0.01):
                 "_distance_m": distance_m,
             })
 
-        # ✅ Sort: smallest wait first, then shortest drive time, then shortest distance
+        #  Sort: smallest wait first, then shortest drive time, then shortest distance
         processed.sort(key=lambda x: (x["_wait_raw"], x["_duration_sec"], x["_distance_m"]))
 
         # Remove helper fields

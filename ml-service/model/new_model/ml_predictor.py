@@ -18,9 +18,9 @@ def load_model():
         model_data = joblib.load(MODEL_PATH)
         model_pipeline = model_data["pipeline"]
         mlb = model_data["mlb"]
-        print("✅ ML model loaded:", MODEL_PATH)
+        print(" ML model loaded:", MODEL_PATH)
     except Exception as e:
-        print("⚠️ ML model not loaded:", e)
+        print(" ML model not loaded:", e)
 
 def app_user_to_model_user(app_user_type: str) -> str:
     """
@@ -66,5 +66,5 @@ def predict_activities(app_user_type: str, charging_time_minutes: int) -> str:
 
         return "Coffee, snack, short walk"
     except Exception as e:
-        print("⚠️ ML predict error:", e)
+        print(" ML predict error:", e)
         return "Coffee, snack, short walk"

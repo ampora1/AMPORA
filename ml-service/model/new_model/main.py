@@ -65,7 +65,7 @@ from ml_predictor import load_model, predict_activities
 try:
     load_model()
 except Exception as e:
-    print(f"⚠️ ML model load failed: {e}")
+    print(f" ML model load failed: {e}")
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
@@ -278,7 +278,7 @@ async def get_nearby_stations(req: NearbyStationsRequest):
 
         return {"stations": rows}
     except Exception as e:
-        print("❌ DB error:", e)
+        print(" DB error:", e)
         return {"stations": [], "error": str(e)}
     finally:
         conn.close()
@@ -307,7 +307,7 @@ async def chat(req: ChatRequest):
         best, sorted_list = analyze_stations_logic(origin, stations_list)
 
         if not best:
-            assistant_text = "⚠️ I couldn't find a suitable station. Try another route or increase station coverage."
+            assistant_text = " I couldn't find a suitable station. Try another route or increase station coverage."
             store["messages"].append({"role": "ai", "text": assistant_text})
             return ChatResponse(
                 conversation_id=req.conversation_id,
@@ -346,7 +346,7 @@ async def chat(req: ChatRequest):
         traceback.print_exc()
         return ChatResponse(
             conversation_id=req.conversation_id,
-            assistant_text="⚠️ Error processing chat. Please try again.",
+            assistant_text=" Error processing chat. Please try again.",
             user_type="Casual_Driver",
             best_station=None,
             sorted_stations=[],
