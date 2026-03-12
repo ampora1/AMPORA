@@ -59,7 +59,7 @@ export default function StationOperator() {
   };
 
   return (
-    <div className="min-h-screen w-screen pt-20 px-8 pb-10 bg-gradient-to-br from-gray-50 via-emerald-50 to-teal-100">
+    <div className="min-h-screen  pt-20 px-8 pb-10 bg-gradient-to-br from-gray-50 via-emerald-50 to-teal-100">
 
       {/* ---------------- HEADER ---------------- */}
       <header className="mb-8 w-full ">

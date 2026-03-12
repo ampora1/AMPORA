@@ -57,7 +57,7 @@ export default function Bookings() {
   const [bookings] = useState(initialBookings);
 
   return (
-    <div className="min-h-screen   w-screen  pt-24 px-6 pb-24 bg-gradient-to-br from-white via-sky-50 to-emerald-50">
+    <div className="min-h-screen    pt-24 px-6 pb-24 bg-gradient-to-br from-white via-sky-50 to-emerald-50">
 
       {/* PAGE TITLE */}
       <div className="w-full mx-auto mb-6">
