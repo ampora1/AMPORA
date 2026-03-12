@@ -278,6 +278,9 @@ export default function ChargerStationPage() {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
                     Name
                   </th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase">
+                    Operator Name
+                  </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
                     Address
                   </th>
@@ -306,6 +309,9 @@ export default function ChargerStationPage() {
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-800">
                       {s.name}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-800">
+                      {s.operator}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {s.address}
