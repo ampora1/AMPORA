@@ -66,6 +66,7 @@ export default function Bookings() {
           Station Bookings
         </h1>
       </div>
+      
 
       {/* BOOKINGS LIST */}
       <div className="max-w-6xl mx-auto space-y-6">
