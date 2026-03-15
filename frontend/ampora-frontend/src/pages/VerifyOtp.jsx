@@ -37,7 +37,7 @@ export default function EmailOtpVerify() {
     try {
      
       const res = await fetch(
-        `https://ampora.dev/password-reset/verify-code/${id}`,        
+        `https://ampora.dev/api/password-reset/verify-code/${id}`,        
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
