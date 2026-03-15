@@ -14,7 +14,7 @@ export default function EmailVerify({ onNext }) {
 
     try {
       const res = await fetch(
-        `https://ampora.dev/password-reset/send-verification-email?email=${encodeURIComponent(email)}`,
+        `https://ampora.dev/api/password-reset/send-verification-email?email=${encodeURIComponent(email)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" }
