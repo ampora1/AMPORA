@@ -22,7 +22,7 @@ export default function ForgetPassword() {
     setLoading(true);
 
     const res = await fetch(
-      `http://localhost:8083/password-reset/reset-password/${id}`,
+      `https://ampora.dev/password-reset/reset-password/${id}`,
       {
         method: "PATCH",
         headers: {
