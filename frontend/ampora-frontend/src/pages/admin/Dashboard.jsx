@@ -149,7 +149,7 @@ export default function Dashboard() {
               Dashboard
             </h1>
             <p className="text-gray-600 mt-1">
-              Welcome ba! Here's your overview
+              Welcome back! Here's your overview
             </p>
           </div>
         </div>
@@ -196,7 +196,7 @@ export default function Dashboard() {
 
         <div className="bg-white rounded-2xl p-6 shadow-lg min-w-0">
           <h2 className="text-xl font-bold text-gray-900 mb-6">
-            Quick Action
+            Quick Actions
           </h2>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 min-w-0">
