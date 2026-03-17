@@ -89,7 +89,7 @@ const HeroSection = () => {
             md:mx-0
           "
         >
-          <input
+          {/* <input
             type="text"
             placeholder="Search EV chargers or locations…"
             className="
@@ -102,7 +102,7 @@ const HeroSection = () => {
               focus:ring-4 focus:ring-emerald-400
               shadow-xl
             "
-          />
+          /> */}
         </motion.div>
 
         {/* ELECTRICITY BARS */}
