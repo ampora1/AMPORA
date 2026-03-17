@@ -103,6 +103,7 @@ const HeroSection = () => {
               shadow-xl
             "
           /> */}
+          
         </motion.div>
 
         {/* ELECTRICITY BARS */}
