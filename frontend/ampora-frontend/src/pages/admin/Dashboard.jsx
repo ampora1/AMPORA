@@ -196,7 +196,7 @@ export default function Dashboard() {
 
         <div className="bg-white rounded-2xl p-6 shadow-lg min-w-0">
           <h2 className="text-xl font-bold text-gray-900 mb-6">
-            Quick Actions
+            Quick Action
           </h2>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 min-w-0">
