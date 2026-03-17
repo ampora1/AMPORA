@@ -37,9 +37,7 @@ pipeline {
                   git reset --hard origin/main
 
                   export VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
-                  docker compose down || true
-                  docker system prune -f || true
-                  docker compose up -d --build --no-cache
+                  docker compose up -d --build
                 "
                 '''
             }
