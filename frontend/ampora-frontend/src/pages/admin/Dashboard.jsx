@@ -149,7 +149,7 @@ export default function Dashboard() {
               Dashboard
             </h1>
             <p className="text-gray-600 mt-1">
-              Welcome back! Here's your overview
+              Welcome ba! Here's your overview
             </p>
           </div>
         </div>
