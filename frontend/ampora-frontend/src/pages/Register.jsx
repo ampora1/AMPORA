@@ -21,7 +21,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-
+  const [errors, setErrors] = useState({});
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
@@ -30,10 +30,14 @@ export default function Register() {
     e.preventDefault();
     setError("");
 
-    if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match");
+    const validationErrors = validate();
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
+
+    setErrors({}); // clear errors
 
     const payload = {
       fullName: `${form.firstName} ${form.lastName}`.trim(),
@@ -62,7 +66,46 @@ export default function Register() {
       setLoading(false);
     }
   }
+  function validate() {
+    const newErrors = {};
 
+    // First Name
+    if (!form.firstName.trim()) {
+      newErrors.firstName = "First name is required";
+    }
+
+    // Last Name
+    if (!form.lastName.trim()) {
+      newErrors.lastName = "Last name is required";
+    }
+
+    // Address
+    if (!form.address.trim()) {
+      newErrors.address = "Address is required";
+    }
+
+    // Phone (exactly 10 digits)
+    if (!/^\d{10}$/.test(form.phone)) {
+      newErrors.phone = "Phone number must contain exactly 10 digits";
+    }
+
+    // Email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      newErrors.email = "Invalid email format";
+    }
+
+    // Password
+    if (form.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    // Confirm Password
+    if (form.password !== form.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    return newErrors;
+  }
   return (
     <div className="min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100 p-4">
       <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
@@ -115,6 +158,7 @@ export default function Register() {
                 required
                 className="input"
               />
+              {errors.firstName && <p className="text-red-500 text-sm">{errors.firstName}</p>}
               <input
                 name="lastName"
                 value={form.lastName}
@@ -139,9 +183,9 @@ export default function Register() {
               value={form.phone}
               onChange={handleChange}
               placeholder="Phone number"
-              required
               className="input"
             />
+            {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
 
             <input
               type="email"
@@ -149,10 +193,9 @@ export default function Register() {
               value={form.email}
               onChange={handleChange}
               placeholder="Email address"
-              required
               className="input"
             />
-
+            {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
             <input
               type={showPassword ? "text" : "password"}
               name="password"
@@ -162,6 +205,7 @@ export default function Register() {
               required
               className="input"
             />
+            {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
 
             <input
               type={showPassword ? "text" : "password"}
@@ -172,6 +216,9 @@ export default function Register() {
               required
               className="input"
             />
+            {errors.confirmPassword && (
+  <p className="text-red-500 text-sm">{errors.confirmPassword}</p>
+)}
 
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <input
