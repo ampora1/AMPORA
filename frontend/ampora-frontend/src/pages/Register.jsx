@@ -129,7 +129,7 @@ export default function Register() {
         {/* ===== FORM ===== */}
         <div className="p-10 flex flex-col justify-center">
           <h1 className="text-3xl font-extrabold text-emerald-700">
-            Create Account
+            reate Account
           </h1>
           <p className="text-sm text-gray-500 mb-6">
             Start your EV journey with Ampora
