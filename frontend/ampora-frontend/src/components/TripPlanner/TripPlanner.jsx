@@ -248,10 +248,66 @@ export default function TripPlanner() {
     const data = await resp.json();
     setStations(data.stations || []);
 
-    evaluateTrip(route, data.stations || []);
+    findReachableStations(route, data.stations || []);
   }
 
+function findReachableStations(route, stations) {
+  if (!selectedVehicle) {
+    setTripStatus({ ok: false, msg: "Select a vehicle first" });
+    return;
+  }
 
+  const fullRangeKm = selectedVehicle.rangeKm;
+  const SAFE_FACTOR = 0.9;
+
+  const availableRangeKm = SAFE_FACTOR * (batteryPct / 100) * fullRangeKm;
+
+  // 📍 Start location
+  const start = {
+    lat: route.legs[0].start_location.lat(),
+    lng: route.legs[0].start_location.lng(),
+  };
+
+  // 📏 Distance helper
+  function getDist(a, b) {
+    return (
+      google.maps.geometry.spherical.computeDistanceBetween(
+        new google.maps.LatLng(a.lat, a.lng),
+        new google.maps.LatLng(b.lat, b.lng)
+      ) / 1000
+    );
+  }
+
+  // 🔍 Filter reachable stations
+  const reachable = stations.filter((s) => {
+    const dist = getDist(start, { lat: s.lat, lng: s.lon });
+    return dist <= availableRangeKm;
+  });
+
+  // ✅ Sort by nearest first (better UX)
+  const sorted = reachable.sort((a, b) => {
+    const d1 = getDist(start, { lat: a.lat, lng: a.lon });
+    const d2 = getDist(start, { lat: b.lat, lng: b.lon });
+    return d1 - d2;
+  });
+
+  // 🎯 Update UI
+  if (sorted.length === 0) {
+    setTripStatus({
+      ok: false,
+      msg: "⚠️ No reachable charging stations with current battery.",
+    });
+  } else {
+    setTripStatus({
+      ok: true,
+      msg: `🔋 ${sorted.length} reachable station(s) found.`,
+      stations: sorted,
+    });
+  }
+
+  // OPTIONAL: highlight only reachable stations on map
+  setStations(sorted);
+}
 
   function evaluateTrip(route, stations) {
   if (!selectedVehicle) {
@@ -260,82 +316,144 @@ export default function TripPlanner() {
   }
 
   const fullRangeKm = selectedVehicle.rangeKm;
-  const routeDistanceKm = route.legs[0].distance.value / 1000;
+  const SAFE_FACTOR = 0.9;
 
-  let batteryKm = (batteryPct / 100) * fullRangeKm;
-  let currentPosition = 0;
+  const initialRange = SAFE_FACTOR * (batteryPct / 100) * fullRangeKm;
+
+  // 📍 START & DESTINATION LAT/LNG
+  const start = {
+    lat: route.legs[0].start_location.lat(),
+    lng: route.legs[0].start_location.lng(),
+  };
+
+  const destination = {
+    lat: route.legs[0].end_location.lat(),
+    lng: route.legs[0].end_location.lng(),
+  };
+
+  // 📏 Distance helper
+  function getDist(a, b) {
+    return (
+      google.maps.geometry.spherical.computeDistanceBetween(
+        new google.maps.LatLng(a.lat, a.lng),
+        new google.maps.LatLng(b.lat, b.lng)
+      ) / 1000
+    );
+  }
 
   let stops = [];
   let totalChargingTime = 0;
 
-  // 🔁 Sort stations by distance from start (IMPORTANT)
-  const sortedStations = [...stations].sort(
-    (a, b) => a.distanceFromStartKm - b.distanceFromStartKm
-  );
+  /* =========================
+     PHASE 1: START → FIRST STATION
+  ========================== */
 
-  while (currentPosition < routeDistanceKm) {
-    const maxReach = currentPosition + batteryKm;
+  // ✅ Direct trip possible
+  if (getDist(start, destination) <= initialRange) {
+    setTripStatus({
+      ok: true,
+      msg: "Trip possible without charging 🚀",
+      stops: [],
+    });
+    return;
+  }
 
-    // ✅ Can reach destination directly
-    if (maxReach >= routeDistanceKm) {
+  // 🔍 Find reachable stations from start
+  const firstReachableStations = stations.filter((s) => {
+    return getDist(start, { lat: s.lat, lng: s.lon }) <= initialRange;
+  });
+
+  // ❌ No station reachable
+  if (firstReachableStations.length === 0) {
+    setTripStatus({
+      ok: false,
+      msg: "Trip NOT possible ❌. Cannot reach any charging station from start.",
+    });
+    return;
+  }
+
+  // ✅ Choose BEST first station (closest to destination)
+  let currentStation = firstReachableStations.reduce((best, s) => {
+    return getDist(s, destination) < getDist(best, destination) ? s : best;
+  });
+
+  stops.push({
+    name: currentStation.name,
+    lat: currentStation.lat,
+    lng: currentStation.lon,
+    chargeTime: 0,
+  });
+
+  // 🔋 Charge at first station
+  {
+    const power = currentStation.powerKw || 50;
+    const chargeTime = (fullRangeKm / power) * 60;
+    totalChargingTime += chargeTime;
+    stops[0].chargeTime = chargeTime;
+  }
+
+  let currentPos = { lat: currentStation.lat, lng: currentStation.lon };
+  let batteryKm = fullRangeKm;
+
+  const visited = new Set();
+  visited.add(currentStation.stationId);
+
+  /* =========================
+     PHASE 2: STATION LOOP
+  ========================== */
+
+  while (true) {
+    // ✅ Can reach destination
+    if (getDist(currentPos, destination) <= batteryKm) {
       setTripStatus({
         ok: true,
-        msg: `Trip possible with ${stops.length} stop(s). Total charging time ~${totalChargingTime.toFixed(
+        msg: `Trip possible with ${stops.length} stop(s). ⚡ Total charging ~${totalChargingTime.toFixed(
           0
-        )} min.`,
+        )} min`,
         stops,
       });
       return;
     }
 
-    // ✅ Find reachable stations ahead
-    const reachableStations = sortedStations.filter(
-      (s) =>
-        s.distanceFromStartKm > currentPosition &&
-        s.distanceFromStartKm <= maxReach
-    );
+    // 🔍 Find reachable stations from current position
+    const reachableStations = stations.filter((s) => {
+      const dist = getDist(currentPos, { lat: s.lat, lng: s.lon });
+      return dist <= batteryKm && !visited.has(s.stationId);
+    });
 
-    // ❌ No station reachable → dead end
+    // ❌ Dead end
     if (reachableStations.length === 0) {
       setTripStatus({
         ok: false,
-        msg: `Trip NOT possible. Stuck at ${currentPosition.toFixed(
-          1
-        )} km. No reachable charging station.`,
+        msg: `Trip NOT possible ❌. No reachable station from current position.`,
       });
       return;
     }
 
-    // ✅ Pick farthest reachable station (GREEDY OPTIMAL)
-    const nextStation = reachableStations.reduce((prev, curr) =>
-      curr.distanceFromStartKm > prev.distanceFromStartKm ? curr : prev
-    );
+    // ✅ Choose BEST next station (closest to destination)
+    const nextStation = reachableStations.reduce((best, s) => {
+      return getDist(s, destination) < getDist(best, destination)
+        ? s
+        : best;
+    });
 
-    // 🔋 Calculate energy used to reach station
-    const distanceTravelled =
-      nextStation.distanceFromStartKm - currentPosition;
-
-    batteryKm -= distanceTravelled;
-    currentPosition = nextStation.distanceFromStartKm;
-
-    // ⚡ Simulate charging (assume full charge)
-    const chargeNeededKm = fullRangeKm - batteryKm;
-
-    // ⏱ Charging time (based on station power)
-    const chargingPower = nextStation.powerKw || 50; // fallback
-    const chargeTimeHours = chargeNeededKm / chargingPower;
-    const chargeTimeMinutes = chargeTimeHours * 60;
-
-    totalChargingTime += chargeTimeMinutes;
-
-    // Reset battery after charging
-    batteryKm = fullRangeKm;
+    // 🔋 Charging
+    const power = nextStation.powerKw || 50;
+    const chargeTime = (fullRangeKm / power) * 60;
+    totalChargingTime += chargeTime;
 
     stops.push({
       name: nextStation.name,
-      distance: nextStation.distanceFromStartKm,
-      chargeTime: chargeTimeMinutes,
+      lat: nextStation.lat,
+      lng: nextStation.lon,
+      chargeTime: chargeTime,
     });
+
+    // 📍 Move
+    currentPos = { lat: nextStation.lat, lng: nextStation.lon };
+    batteryKm = fullRangeKm;
+
+    visited.add(nextStation.stationId);
   }
 }
 
@@ -625,8 +743,8 @@ export default function TripPlanner() {
                 <div
                   key={i}
                   className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${m.role === "user"
-                      ? "ml-auto bg-emerald-500 text-white"
-                      : "mr-auto bg-white text-gray-800 border border-emerald-50"
+                    ? "ml-auto bg-emerald-500 text-white"
+                    : "mr-auto bg-white text-gray-800 border border-emerald-50"
                     }`}
                 >
                   {m.text}
@@ -651,8 +769,8 @@ export default function TripPlanner() {
                 <button
                   onClick={handleVoiceInput}
                   className={`p-3 rounded-xl transition-all ${isListening
-                      ? "bg-red-500 text-white animate-pulse"
-                      : "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
+                    ? "bg-red-500 text-white animate-pulse"
+                    : "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
                     }`}
                 >
                   {isListening ? "🛑" : "🎤"}

@@ -673,7 +673,10 @@ export default function StationFinder() {
               );
 
               const data=await res.json();
-
+if (!res.ok) {
+  alert(data.message || "Booking failed");
+  return;
+}
               navigate("/payments",{
                 state:{
                   bookingId:data.bookingId,
