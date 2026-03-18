@@ -59,6 +59,26 @@ const VehicleManager = () => {
   const [brands, setBrands] = useState([]);
   const [models, setModels] = useState([]); // all or filtered by brand for dropdown
   const [loading, setLoading] = useState(true);
+  const CONNECTOR_TYPES = [
+  "Type 1 (J1772)",
+  "Type 2 (Mennekes)",
+  "CCS1",
+  "CCS2",
+  "CHAdeMO",
+  "GB/T",
+];
+
+const BATTERY_OPTIONS = [
+  "20 kWh",
+  "24 kWh",
+  "30 kWh",
+  "40 kWh",
+  "50 kWh",
+  "60 kWh",
+  "75 kWh",
+  "82 kWh",
+  "100 kWh",
+];
   const quickActions = [
     { title: "User Details", icon: <FiUser />, to: "/profile" },
     { title: "Vehicle Details", icon: <LuCar />, to: "/vehicles" },
@@ -736,37 +756,105 @@ const VehicleForm = ({
 
   return (
     <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit?.();
-      }}
-      className="space-y-4"
-    >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {selectBrand}
-        {selectModel}
-        {field("variant", "Battery / Variant", "40 kWh / 60 kWh")}
-        {field("plate", "Plate Number", "WP-CAD-4123")}
-        {field("connector", "Connector", "CHAdeMO / CCS2 / Type 2")}
-        {field("rangeKm", "Range (km)", "400", "number")}
-      </div>
+  onSubmit={(e) => {
+    e.preventDefault();
+    onSubmit?.();
+  }}
+  className="space-y-4"
+>
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-      <div className="pt-2 flex items-center justify-end gap-3">
-        <button
-          type="button"
-          onClick={() => window.history.back()}
-          className="px-4 py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700"
-        >
-          {submitText}
-        </button>
-      </div>
-    </form>
+    {selectBrand}
+    {selectModel}
+
+    {/* Battery Dropdown */}
+    <div className="flex flex-col">
+      <label className="text-xs font-semibold text-emerald-800 mb-1">
+        Battery Capacity (kWh)
+      </label>
+      <select
+        value={form.variant}
+        onChange={(e) =>
+          setForm((f) => ({ ...f, variant: e.target.value }))
+        }
+        className={`rounded-xl border px-3 py-2 outline-none bg-white/80 text-black 
+          ${
+            errors.variant
+              ? "border-red-300 focus:ring-2 focus:ring-red-400"
+              : "border-emerald-300 focus:ring-2 focus:ring-emerald-400"
+          }`}
+      >
+        <option value="">Select battery capacity…</option>
+<option value="20">20 kWh</option>
+<option value="24">24 kWh</option>
+<option value="30">30 kWh</option>
+<option value="40">40 kWh</option>
+<option value="50">50 kWh</option>
+<option value="60">60 kWh</option>
+<option value="75">75 kWh</option>
+<option value="82">82 kWh</option>
+<option value="100">100 kWh</option>
+      </select>
+      {errors.variant && (
+        <span className="text-xs text-red-600 mt-1">{errors.variant}</span>
+      )}
+    </div>
+
+    {/* Plate */}
+    {field("plate", "Plate Number", "WP-CAD-4123")}
+
+    {/* Connector Dropdown */}
+    <div className="flex flex-col">
+      <label className="text-xs font-semibold text-emerald-800 mb-1">
+        Connector Type
+      </label>
+      <select
+        value={form.connector}
+        onChange={(e) =>
+          setForm((f) => ({ ...f, connector: e.target.value }))
+        }
+        className={`rounded-xl border px-3 py-2 outline-none bg-white/80 text-black 
+          ${
+            errors.connector
+              ? "border-red-300 focus:ring-2 focus:ring-red-400"
+              : "border-emerald-300 focus:ring-2 focus:ring-emerald-400"
+          }`}
+      >
+        <option value="">Select connector type…</option>
+        <option value="Type 1 (J1772)">Type 1 (J1772)</option>
+        <option value="Type 2 (Mennekes)">Type 2 (Mennekes)</option>
+        <option value="CCS1">CCS1</option>
+        <option value="CCS2">CCS2</option>
+        <option value="CHAdeMO">CHAdeMO</option>
+        <option value="GB/T">GB/T</option>
+      </select>
+      {errors.connector && (
+        <span className="text-xs text-red-600 mt-1">{errors.connector}</span>
+      )}
+    </div>
+
+    {/* Range */}
+    {field("rangeKm", "Range (km)", "400", "number")}
+
+  </div>
+
+  {/* Buttons */}
+  <div className="pt-2 flex items-center justify-end gap-3">
+    <button
+      type="button"
+      onClick={() => window.history.back()}
+      className="px-4 py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700"
+    >
+      {submitText}
+    </button>
+  </div>
+</form>
   );
 };
 

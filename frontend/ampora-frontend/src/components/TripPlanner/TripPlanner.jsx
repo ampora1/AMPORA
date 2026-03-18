@@ -63,96 +63,96 @@ export default function TripPlanner() {
     googleMapsApiKey: "AIzaSyCGX_5oc5ijf_B-df9TT_zocjcc4-qfBRk",
     libraries: ["places"],
   });
-const conversationIdRef = useRef(`trip-${Date.now()}`);
-const [chatOpen, setChatOpen] = useState(false);
-const [chatInput, setChatInput] = useState("");
-const [chatMessages, setChatMessages] = useState([]);
-const audioRef = useRef(null);
-const [isListening, setIsListening] = useState(false);
-const [isTyping, setIsTyping] = useState(false);
-const messagesEndRef = useRef(null);
+  const conversationIdRef = useRef(`trip-${Date.now()}`);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+  const audioRef = useRef(null);
+  const [isListening, setIsListening] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef(null);
 
-useEffect(() => {
-  messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-}, [chatMessages]);
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
 
-const handleVoiceInput = () => {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    alert("not valid to voice recognition");
-    return;
-  }
-
-  const recognition = new SpeechRecognition();
-  recognition.lang = "en-US"; 
-
-  recognition.onstart = () => setIsListening(true);
-  recognition.onend = () => setIsListening(false);
-
-  recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
-    setChatInput(transcript);
-  };
-
-  recognition.start();
-};
-async function sendChatMessage() {
-  if (!chatInput.trim()) return;
-
-  if (audioRef.current) {
-    audioRef.current.pause();
-    audioRef.current = null;
-  }
-
-  setIsTyping(true); 
-  const userMessage = chatInput;
-  setChatMessages(prev => [...prev, { role: "user", text: userMessage }]);
-  setChatInput("");
-
-  try {
-    const res = await fetch("https://ampora.dev/ml/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        conversation_id: conversationIdRef.current,
-        start_city: startText,
-        end_city: endText,
-        soc_level: batteryPct,
-        user_text: userMessage,
-        stations: stations.map(s => ({
-          station_id: s.stationId,
-          name: s.name,
-          lat: s.lat,
-          lng: s.lon,
-          address: s.address,
-          status: s.status
-        }))
-      })
-    });
-
-    const data = await res.json();
-    setIsTyping(false);
-
-    setChatMessages(prev => [
-      ...prev,
-      { role: "ai", text: data.assistant_text }
-    ]);
-
-    if (data.audio_base64) {
-      const audioSrc = `data:audio/mp3;base64,${data.audio_base64}`;
-      const audio = new Audio(audioSrc);
-      audioRef.current = audio; 
-      audio.play().catch(e => console.error("Audio playback error:", e));
+  const handleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("not valid to voice recognition");
+      return;
     }
 
-  } catch (err) {
-    setIsTyping(false);
-    setChatMessages(prev => [
-      ...prev,
-      { role: "ai", text: "⚠️ Unable to reach assistant right now." }
-    ]);
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setChatInput(transcript);
+    };
+
+    recognition.start();
+  };
+  async function sendChatMessage() {
+    if (!chatInput.trim()) return;
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
+    setIsTyping(true);
+    const userMessage = chatInput;
+    setChatMessages(prev => [...prev, { role: "user", text: userMessage }]);
+    setChatInput("");
+
+    try {
+      const res = await fetch("https://ampora.dev/ml/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversation_id: conversationIdRef.current,
+          start_city: startText,
+          end_city: endText,
+          soc_level: batteryPct,
+          user_text: userMessage,
+          stations: stations.map(s => ({
+            station_id: s.stationId,
+            name: s.name,
+            lat: s.lat,
+            lng: s.lon,
+            address: s.address,
+            status: s.status
+          }))
+        })
+      });
+
+      const data = await res.json();
+      setIsTyping(false);
+
+      setChatMessages(prev => [
+        ...prev,
+        { role: "ai", text: data.assistant_text }
+      ]);
+
+      if (data.audio_base64) {
+        const audioSrc = `data:audio/mp3;base64,${data.audio_base64}`;
+        const audio = new Audio(audioSrc);
+        audioRef.current = audio;
+        audio.play().catch(e => console.error("Audio playback error:", e));
+      }
+
+    } catch (err) {
+      setIsTyping(false);
+      setChatMessages(prev => [
+        ...prev,
+        { role: "ai", text: "⚠️ Unable to reach assistant right now." }
+      ]);
+    }
   }
-}
 
   const mapCenter = { lat: 7.8731, lng: 80.7718 };
   const [avoidHighways, setAvoidHighways] = useState(false);
@@ -198,7 +198,7 @@ async function sendChatMessage() {
       ) / 1000
     );
   }
- 
+
   async function findRoutes() {
     if (!startText || !endText) return alert("Select start and destination");
 
@@ -254,62 +254,97 @@ async function sendChatMessage() {
 
 
   function evaluateTrip(route, stations) {
-    if (!selectedVehicle) {
-      setTripStatus({ ok: false, msg: "Select a vehicle first" });
-      return;
-    }
+  if (!selectedVehicle) {
+    setTripStatus({ ok: false, msg: "Select a vehicle first" });
+    return;
+  }
 
-    const fullRangeKm = selectedVehicle.rangeKm;
-    const availableKm = (batteryPct / 100) * fullRangeKm;
+  const fullRangeKm = selectedVehicle.rangeKm;
+  const routeDistanceKm = route.legs[0].distance.value / 1000;
 
+  let batteryKm = (batteryPct / 100) * fullRangeKm;
+  let currentPosition = 0;
 
-    const routeDistanceKm = route.legs[0].distance.value / 1000;
+  let stops = [];
+  let totalChargingTime = 0;
 
+  // 🔁 Sort stations by distance from start (IMPORTANT)
+  const sortedStations = [...stations].sort(
+    (a, b) => a.distanceFromStartKm - b.distanceFromStartKm
+  );
 
-    if (stations.length === 0) {
-      if (availableKm >= routeDistanceKm) {
-        setTripStatus({
-          ok: true,
-          msg: "Trip possible without charging",
-        });
-      } else {
-        setTripStatus({
-          ok: false,
-          msg: `Trip NOT possible. Need ${routeDistanceKm.toFixed(
-            1
-          )} km but only ${availableKm.toFixed(1)} km available.`,
-        });
-      }
-      return;
-    }
+  while (currentPosition < routeDistanceKm) {
+    const maxReach = currentPosition + batteryKm;
 
-
-    const firstStation = stations[0];
-
-
-    const distanceToFirstStationKm = firstStation.distanceFromStartKm;
-
-    if (availableKm >= distanceToFirstStationKm) {
+    // ✅ Can reach destination directly
+    if (maxReach >= routeDistanceKm) {
       setTripStatus({
         ok: true,
-        msg: "Trip possible (can reach first charging station)",
+        msg: `Trip possible with ${stops.length} stop(s). Total charging time ~${totalChargingTime.toFixed(
+          0
+        )} min.`,
+        stops,
       });
-    } else {
+      return;
+    }
+
+    // ✅ Find reachable stations ahead
+    const reachableStations = sortedStations.filter(
+      (s) =>
+        s.distanceFromStartKm > currentPosition &&
+        s.distanceFromStartKm <= maxReach
+    );
+
+    // ❌ No station reachable → dead end
+    if (reachableStations.length === 0) {
       setTripStatus({
         ok: false,
-        msg: `Trip NOT possible. Cannot reach first charging station (${distanceToFirstStationKm.toFixed(
+        msg: `Trip NOT possible. Stuck at ${currentPosition.toFixed(
           1
-        )} km). Available range is ${availableKm.toFixed(1)} km.`,
+        )} km. No reachable charging station.`,
       });
+      return;
     }
+
+    // ✅ Pick farthest reachable station (GREEDY OPTIMAL)
+    const nextStation = reachableStations.reduce((prev, curr) =>
+      curr.distanceFromStartKm > prev.distanceFromStartKm ? curr : prev
+    );
+
+    // 🔋 Calculate energy used to reach station
+    const distanceTravelled =
+      nextStation.distanceFromStartKm - currentPosition;
+
+    batteryKm -= distanceTravelled;
+    currentPosition = nextStation.distanceFromStartKm;
+
+    // ⚡ Simulate charging (assume full charge)
+    const chargeNeededKm = fullRangeKm - batteryKm;
+
+    // ⏱ Charging time (based on station power)
+    const chargingPower = nextStation.powerKw || 50; // fallback
+    const chargeTimeHours = chargeNeededKm / chargingPower;
+    const chargeTimeMinutes = chargeTimeHours * 60;
+
+    totalChargingTime += chargeTimeMinutes;
+
+    // Reset battery after charging
+    batteryKm = fullRangeKm;
+
+    stops.push({
+      name: nextStation.name,
+      distance: nextStation.distanceFromStartKm,
+      chargeTime: chargeTimeMinutes,
+    });
   }
+}
 
 
 
   const sriLankaAutocompleteOptions = {
-    componentRestrictions: { country: "lk" }, 
+    componentRestrictions: { country: "lk" },
     fields: ["formatted_address", "geometry", "name"],
-    types: ["geocode"], 
+    types: ["geocode"],
   };
 
   if (!isLoaded) return <div>Loading maps…</div>;
@@ -317,7 +352,7 @@ async function sendChatMessage() {
   return (
     <div className="min-h-screen bg-[#edffff]  space-y-6">
       <div className="relative  lg:mt-0 mt-3 h-[34vh] rounded-b-[70px] overflow-hidden bg-gradient-to-tr from-teal-900 via-emerald-800 to-teal-700"> <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 120"> <path fill="rgba(255,255,255,0.15)" d="M0,64L60,58.7C120,53,240,43,360,53.3C480,64,600,96,720,101.3C840,107,960,85,1080,69.3C1200,53,1320,43,1380,37.3L1440,32V120H0Z" /> </svg> <div className="relative h-full flex flex-col items-center justify-center text-center px-6"> <h1 className="text-5xl md:text-6xl font-extrabold text-white"> EV Trip <span className="text-emerald-300">Planner</span> </h1> <p className="mt-3 text-emerald-100 text-lg"> Smart • Efficient • Stress-Free </p> </div> </div>
-    
+
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -560,91 +595,89 @@ async function sendChatMessage() {
 
 
 
-<button
-  onClick={() => setChatOpen(true)}
-  className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-emerald-500 text-white shadow-xl flex items-center justify-center hover:scale-105 transition"
->
-  💬
-</button>
+      <button
+        onClick={() => setChatOpen(true)}
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-emerald-500 text-white shadow-xl flex items-center justify-center hover:scale-105 transition"
+      >
+        💬
+      </button>
 
-<AnimatePresence>
-  {chatOpen && (
-    <motion.div
-      initial={{ x: 400 }}
-      animate={{ x: 0 }}
-      exit={{ x: 400 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="fixed bottom-0 right-0 z-50 w-[360px] h-[550px] bg-white rounded-l-3xl shadow-2xl flex flex-col border-l border-emerald-100"
-    >
-      {/* Header */}
-      <div className="p-4 bg-emerald-500 text-white rounded-tl-3xl flex justify-between items-center shadow-md">
-        <h3 className="font-semibold flex items-center gap-2">
-          AMPORA Assistant ⚡
-        </h3>
-        <button onClick={() => setChatOpen(false)} className="hover:text-red-200">✕</button>
-      </div>
-
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#edffff]">
-        {chatMessages.map((m, i) => (
-          <div
-            key={i}
-            className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${
-              m.role === "user"
-                ? "ml-auto bg-emerald-500 text-white"
-                : "mr-auto bg-white text-gray-800 border border-emerald-50"
-            }`}
+      <AnimatePresence>
+        {chatOpen && (
+          <motion.div
+            initial={{ x: 400 }}
+            animate={{ x: 0 }}
+            exit={{ x: 400 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="fixed bottom-0 right-0 z-50 w-[360px] h-[550px] bg-white rounded-l-3xl shadow-2xl flex flex-col border-l border-emerald-100"
           >
-            {m.text}
-          </div>
-        ))}
-        
-        {/* NEW: Thinking Indicator */}
-        {isTyping && (
-          <div className="mr-auto bg-white/50 p-2 rounded-xl text-[10px] text-emerald-600 font-medium animate-pulse">
-             Assistant is thinking...
-          </div>
+            {/* Header */}
+            <div className="p-4 bg-emerald-500 text-white rounded-tl-3xl flex justify-between items-center shadow-md">
+              <h3 className="font-semibold flex items-center gap-2">
+                AMPORA Assistant ⚡
+              </h3>
+              <button onClick={() => setChatOpen(false)} className="hover:text-red-200">✕</button>
+            </div>
+
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#edffff]">
+              {chatMessages.map((m, i) => (
+                <div
+                  key={i}
+                  className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${m.role === "user"
+                      ? "ml-auto bg-emerald-500 text-white"
+                      : "mr-auto bg-white text-gray-800 border border-emerald-50"
+                    }`}
+                >
+                  {m.text}
+                </div>
+              ))}
+
+              {/* NEW: Thinking Indicator */}
+              {isTyping && (
+                <div className="mr-auto bg-white/50 p-2 rounded-xl text-[10px] text-emerald-600 font-medium animate-pulse">
+                  Assistant is thinking...
+                </div>
+              )}
+
+              {/* NEW: Auto-scroll Target */}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input Section */}
+            <div className="p-3 border-t bg-white flex flex-col gap-2">
+              <div className="flex gap-2 items-center">
+                {/* NEW: Microphone Button */}
+                <button
+                  onClick={handleVoiceInput}
+                  className={`p-3 rounded-xl transition-all ${isListening
+                      ? "bg-red-500 text-white animate-pulse"
+                      : "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
+                    }`}
+                >
+                  {isListening ? "🛑" : "🎤"}
+                </button>
+
+                <input
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && sendChatMessage()}
+                  placeholder={isListening ? "Listening..." : "Ask something..."}
+                  className="flex-1 p-3 rounded-xl bg-[#edffff] outline-none border focus:border-emerald-400 text-sm"
+                />
+              </div>
+
+              <button
+                onClick={sendChatMessage}
+                disabled={isTyping}
+                className="w-full py-2 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 transition disabled:opacity-50"
+              >
+                Send
+              </button>
+            </div>
+          </motion.div>
         )}
-        
-        {/* NEW: Auto-scroll Target */}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input Section */}
-      <div className="p-3 border-t bg-white flex flex-col gap-2">
-        <div className="flex gap-2 items-center">
-          {/* NEW: Microphone Button */}
-          <button
-            onClick={handleVoiceInput}
-            className={`p-3 rounded-xl transition-all ${
-              isListening 
-                ? "bg-red-500 text-white animate-pulse" 
-                : "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
-            }`}
-          >
-            {isListening ? "🛑" : "🎤"}
-          </button>
-
-          <input
-            value={chatInput}
-            onChange={e => setChatInput(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && sendChatMessage()}
-            placeholder={isListening ? "Listening..." : "Ask something..."}
-            className="flex-1 p-3 rounded-xl bg-[#edffff] outline-none border focus:border-emerald-400 text-sm"
-          />
-        </div>
-        
-        <button
-          onClick={sendChatMessage}
-          disabled={isTyping}
-          className="w-full py-2 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 transition disabled:opacity-50"
-        >
-          Send
-        </button>
-      </div>
-    </motion.div>
-  )}
-    </AnimatePresence>
-  </div> 
+      </AnimatePresence>
+    </div>
   );
 }
