@@ -117,7 +117,7 @@ export default function OperatorPremium() {
       { label: "Live Sessions", value: 1, icon: SignalIcon },
       { label: "Energy Delivered", value: "15 kWh", icon: BoltIcon },
       { label: "Revenue Today", value: "Rs 1250.90", icon: CurrencyDollarIcon },
-      { label: "System Health", value: "98.6%", icon: CpuChipIcon },
+      ,
     ],
     []
   );
@@ -136,7 +136,7 @@ export default function OperatorPremium() {
       </div>
 
       {/* KPI ROW */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {kpis.map((k) => (
           <KpiCard key={k.label} {...k} />
         ))}
@@ -145,7 +145,7 @@ export default function OperatorPremium() {
       {/* ENERGY + LIVE SESSIONS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <EnergyChart series={series} />
-        <LiveSessions />
+        {/* <LiveSessions /> */}
       </div>
 
       {/* UPCOMING BOOKINGS */}
@@ -273,7 +273,7 @@ function KpiCard({ label, value, icon: Icon }) {
 
 function EnergyChart({ series }) {
   return (
-    <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
+    <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-md">
       <h3 className="font-semibold mb-3">Live Energy Load (kW)</h3>
       <ResponsiveContainer width="100%" height={260}>
         <LineChart data={series}>
