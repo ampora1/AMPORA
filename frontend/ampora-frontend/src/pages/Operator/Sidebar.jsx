@@ -11,8 +11,8 @@ export default function Sidebar({ open, onClose }) {
     [HomeIcon, "Overview", "/operator"],
     [MapPinIcon, "Stations", "/operator/stations"],
     [BoltIcon, "Booking", "/operator/bookings"],
-    [CurrencyDollarIcon, "Payments", "/operator/payments"],
-    [WrenchScrewdriverIcon, "Maintenance", "/operator/maintenance"],
+    // [CurrencyDollarIcon, "Payments", "/operator/payments"],
+    // [WrenchScrewdriverIcon, "Maintenance", "/operator/maintenance"],
     [DocumentTextIcon, "Reports", "/operator/reports"],
     [Cog6ToothIcon, "Settings", "/operator/settings"],
   ];

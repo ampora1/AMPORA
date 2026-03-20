@@ -47,7 +47,7 @@ function updateReport(updatedReport) {
 
 
   return (
-     <div className="min-h-screen w-screen pt-20 px-8 pb-10 bg-gradient-to-br from-gray-50 via-emerald-50 to-teal-100">
+     <div className="pt-15 px-8 pb-8 space-y-6 bg-emerald-50 min-h-screen">
 
       {/* HEADER */}
       <div className="flex justify-between items-center mb-6 max-w-5xl mx-auto">

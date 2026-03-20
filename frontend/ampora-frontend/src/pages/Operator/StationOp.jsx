@@ -165,7 +165,7 @@ export default function StationOperator() {
 
                 <td>
                   <div className="flex items-center gap-2">
-                    {slot.status === "Available" ? (
+                    {slot.status === "AVAILABLE" ? (
                       <CheckCircleIcon className="w-5 h-5 text-emerald-500" />
                     ) : (
                       <XCircleIcon className="w-5 h-5 text-rose-500" />

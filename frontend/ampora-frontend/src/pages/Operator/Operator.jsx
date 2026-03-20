@@ -19,7 +19,7 @@ import {
 import useOperatorSocket from "./useOperatorSocket";
 
 
-/* ---------------- MOCK DATA ---------------- */
+
 
 const makeEnergySeries = () =>
   Array.from({ length: 8 }).map((_, i) => ({
@@ -76,7 +76,7 @@ const upcomingBookings = [
   },
 ];
 
-/* ================= MAIN COMPONENT ================= */
+
 
 export default function OperatorPremium() {
   const [series, setSeries] = useState(makeEnergySeries);
@@ -86,19 +86,35 @@ export default function OperatorPremium() {
     { from: "admin", text: "Hello Operator, how can we help?" },
   ]);
   const liveData = useOperatorSocket();
-
+  const [totalEnergy, setTotalEnergy] = useState(0);
+  const [liveSessionsCount, setLiveSessionsCount] = useState(0);
+  const [activeChargers, setActiveChargers] = useState(new Set());
   useEffect(() => {
     if (!liveData) return;
 
+    const energyKwh = liveData.energy  ; // ⚠️ because ESP multiplies
+    const powerKw = liveData.power / 1000;
+
+    // chart update
     setSeries((prev) => [
       ...prev.slice(-9),
       {
         time: new Date().toLocaleTimeString(),
-        kW: liveData.power / 1000,
-      }
+        kW: powerKw,
+      },
     ]);
-  }, [liveData]);
 
+    // 🔥 accumulate energy
+    setTotalEnergy((prev) =>  energyKwh);
+
+    // 🔥 track active sessions (simple logic)
+    if (powerKw > 0) {
+      setLiveSessionsCount(1); // you can improve later
+    } else {
+      setLiveSessionsCount(0);
+    }
+
+  }, [liveData]);
   const handleSend = () => {
     if (message.trim() === "") return;
 
@@ -110,18 +126,32 @@ export default function OperatorPremium() {
     setMessage("");
   };
 
+const RATE = 85;
+const SERVICE_CHARGE = 200;
 
-  const kpis = useMemo(
-    () => [
-      { label: "Charging Slots", value: 3, icon: MapPinIcon },
-      { label: "Live Sessions", value: 1, icon: SignalIcon },
-      { label: "Energy Delivered", value: "15 kWh", icon: BoltIcon },
-      { label: "Revenue Today", value: "Rs 1250.90", icon: CurrencyDollarIcon },
-      ,
-    ],
-    []
-  );
-
+const revenue = (totalEnergy * RATE + SERVICE_CHARGE).toFixed(2);
+  const kpis = [
+  {
+    label: "Charging Slots",
+    value: activeChargers.size || 3, // fallback
+    icon: MapPinIcon,
+  },
+  {
+    label: "Live Sessions",
+    value: liveSessionsCount,
+    icon: SignalIcon,
+  },
+  {
+    label: "Energy Delivered",
+    value: `${totalEnergy.toFixed(2)} kWh`,
+    icon: BoltIcon,
+  },
+  {
+    label: "Revenue Today",
+    value: `Rs ${revenue}`,
+    icon: CurrencyDollarIcon,
+  },
+];
   return (
     <div className="pt-15 px-8 pb-8 space-y-6 bg-emerald-50 min-h-screen">
 
@@ -135,23 +165,23 @@ export default function OperatorPremium() {
         </div>
       </div>
 
-      {/* KPI ROW */}
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {kpis.map((k) => (
           <KpiCard key={k.label} {...k} />
         ))}
       </div>
 
-      {/* ENERGY + LIVE SESSIONS */}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <EnergyChart series={series} />
         {/* <LiveSessions /> */}
       </div>
 
-      {/* UPCOMING BOOKINGS */}
+
       <UpcomingBookings />
 
-      {/* CHAT BUTTON */}
+
       <motion.button
         onClick={() => setChatOpen(true)}
         whileHover={{ scale: 1.1 }}
@@ -178,7 +208,7 @@ export default function OperatorPremium() {
         </svg>
       </motion.button>
 
-      {/* CHAT WINDOW */}
+
       <AnimatePresence>
         {chatOpen && (
           <motion.div
@@ -205,8 +235,8 @@ export default function OperatorPremium() {
                 <div
                   key={index}
                   className={`p-2 rounded-lg max-w-[75%] ${msg.from === "operator"
-                      ? "ml-auto bg-emerald-500 text-white"
-                      : "bg-slate-100 text-slate-700"
+                    ? "ml-auto bg-emerald-500 text-white"
+                    : "bg-slate-100 text-slate-700"
                     }`}
                 >
                   {msg.text}
@@ -254,7 +284,7 @@ export default function OperatorPremium() {
   );
 }
 
-/* ================= SUB COMPONENTS ================= */
+
 
 function KpiCard({ label, value, icon: Icon }) {
   return (
@@ -307,8 +337,8 @@ function LiveSessions() {
               <div className="text-sm">{s.power}</div>
               <span
                 className={`text-xs px-2 py-1 rounded-full ${s.status === "Charging"
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-amber-100 text-amber-700"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-amber-100 text-amber-700"
                   }`}
               >
                 {s.status}
@@ -364,8 +394,8 @@ function UpcomingBookings() {
                   <div className="text-xs text-slate-500">{b.phone}</div>
                   <span
                     className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs ${b.tier === "Premium"
-                        ? "bg-indigo-100 text-indigo-700"
-                        : "bg-slate-100 text-slate-700"
+                      ? "bg-indigo-100 text-indigo-700"
+                      : "bg-slate-100 text-slate-700"
                       }`}
                   >
                     {b.tier}
@@ -392,8 +422,8 @@ function UpcomingBookings() {
                 <td>
                   <span
                     className={`px-3 py-1 rounded-full text-xs ${b.status === "Confirmed"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-amber-100 text-amber-700"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-amber-100 text-amber-700"
                       }`}
                   >
                     {b.status}
