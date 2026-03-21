@@ -138,11 +138,11 @@ const userId = localStorage.getItem("userId");
               </div>
 
               {/* Stats */}
-              <div className="space-y-4">
+              {/* <div className="space-y-4">
                 <StatCard title="Total Charges" value="42 Sessions" />
                 <StatCard title="This Month Spend" value="LKR 18,450" />
                 <StatCard title="Energy Used (30 Days)" value="212.4 kWh" />
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

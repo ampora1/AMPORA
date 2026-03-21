@@ -86,7 +86,7 @@ function logout() {
     { title: "Profile", icon: <FiUser />, to: "/profile" },
     { title: "Vehicles", icon: <LuCar />, to: "/vehicles" },
     { title: "Bookings", icon: <FiCalendar />, to: "/bookings" },
-    { title: "Payments", icon: <FiCreditCard />, to: "/package" },
+    { title: "Plans and Subscriptions", icon: <FiCreditCard />, to: "/package" },
     { title: "Charging History", icon: <FiZap />, to: "/history" },
     { title: "Logout", icon: <FiLogOut />, onClick: logout, to: "/login" },
   ];
