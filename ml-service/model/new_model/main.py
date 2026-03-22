@@ -12,8 +12,7 @@ import requests
 from dotenv import load_dotenv
 
 
-# 0) Feature transformer (UNCHANGED)
-# ==========================
+
 def transform_features(X_df: pd.DataFrame) -> pd.DataFrame:
     X_copy = X_df.copy()
 
@@ -48,8 +47,7 @@ def transform_features(X_df: pd.DataFrame) -> pd.DataFrame:
     return X_copy.drop(["time", "day", "month", "user_type"], axis=1)
 
 
-# Bind into __main__ so pickle can resolve __main__.transform_features
-import __main__  # noqa
+import __main__  
 __main__.transform_features = transform_features
 
 #  Load env
@@ -66,9 +64,7 @@ from database import get_db_connection
 from distance_time import analyze_stations_logic
 from ml_predictor import load_model, predict_activities
 
-# ==========================
-# 1) LangChain imports
-# ==========================
+# LangChain imports
 from langchain_groq import ChatGroq
 from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -79,9 +75,7 @@ from langchain.agents.agent import AgentExecutor
 from langchain.agents.tool_calling_agent.base import create_tool_calling_agent
 
 
-# ==========================
-# Logging helpers (CLEAR SOURCES)
-# ==========================
+
 def log(tag: str, msg: str):
     ts = datetime.now().strftime("%H:%M:%S")
     print(f"[{ts}] {tag} {msg}", flush=True)
@@ -97,9 +91,7 @@ def log_json(tag: str, title: str, obj: Any, max_len: int = 1200):
     log(tag, f"{title}: {s}")
 
 
-# ==========================
-# 2) Load ML model
-# ==========================
+
 try:
     load_model()
     log("[SRC:ML]", "ML model loaded")
@@ -114,14 +106,12 @@ lc_llm = ChatGroq(
     temperature=0.2,
 )
 
-# Support both variable names
 GMAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY") or os.getenv("GMAPS_API_KEY") or ""
 if not GMAPS_API_KEY:
     log("[SRC:PLACES]", "⚠️ GOOGLE_MAPS_API_KEY/GMAPS_API_KEY missing -> Google Places disabled")
 
 app = FastAPI()
 
-#  Vite CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -133,17 +123,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ==========================
-# 3) Memory store per conversation_id
-# ==========================
 CHAT_STORE: Dict[str, Dict[str, Any]] = {}
 
 APP_USER_TYPES = ["Delivery_Driver", "Business_Man", "Casual_Driver", "Tourist"]
 
 
-# ==========================
-# 4) Pydantic Models 
-# ==========================
+
 class Station(BaseModel):
     
     station_id: Optional[str] = None
@@ -180,9 +165,7 @@ class ChatResponse(BaseModel):
     audio_base64: Optional[str] = None
 
 
-# ==========================
-# 5) Intent + Helpers
-# ==========================
+
 def get_origin(req: ChatRequest):
     if req.start_lat is not None and req.start_lng is not None:
         return (req.start_lat, req.start_lng)
@@ -293,9 +276,7 @@ async def generate_voice_base64(text: str) -> str:
     return base64.b64encode(audio_data).decode("utf-8")
 
 
-# ==========================
-# 6) Google Places Helpers (WITH LOGS)
-# ==========================
+
 def google_places_nearby(lat: float, lng: float, place_type: str, radius_m: int = 2500, keyword: str = "") -> List[dict]:
     if not GMAPS_API_KEY:
         log("[SRC:PLACES]", " API key missing -> returning empty")
@@ -374,9 +355,7 @@ def ml_activities_to_place_requests(activities: str) -> List[dict]:
     return uniq[:3]
 
 
-# ==========================
-# 7) LangChain tools (PLACES + OTHER STATIONS)
-# ==========================
+
 @tool
 def tool_places_for_ml_activities(station_lat: float, station_lng: float, activities: str) -> str:
     """
@@ -447,9 +426,7 @@ def tool_other_stations(stations_json: str) -> str:
         return json.dumps({"error": str(e), "others": []})
 
 
-# ==========================
-# 8) Agent Prompt
-# ==========================
+
 SYSTEM = """
 You are AMPORA ⚡ (Sri Lanka EV travel assistant).
 
@@ -497,9 +474,7 @@ runnable = RunnableWithMessageHistory(
     history_messages_key="chat_history",
 )
 
-# ==========================
-#  Attach chargers + bookings from DB (FIXED)
-# ==========================
+
 def _resolve_missing_station_ids(stations_list: List[dict]) -> None:
     """
     FIXED:
@@ -522,7 +497,6 @@ def _resolve_missing_station_ids(stations_list: List[dict]) -> None:
                 if lat is None or lng is None:
                     continue
 
-                #  single query: name fuzzy OR nearest coords
                 try:
                     cur.execute(
                         """
@@ -641,9 +615,7 @@ def attach_chargers_and_bookings(stations_list: List[dict]) -> List[dict]:
         conn.close()
 
 
-# ==========================
-# 9) Endpoint: get-nearby-stations 
-# ==========================
+
 @app.post("/get-nearby-stations")
 async def get_nearby_stations(req: NearbyStationsRequest):
     path_points = req.path_points or []
@@ -680,9 +652,7 @@ async def get_nearby_stations(req: NearbyStationsRequest):
         conn.close()
 
 
-# ==========================
-# 10) Endpoint: chat (MAIN) - minimal changes for new feature
-# ==========================
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
     try:
@@ -725,7 +695,6 @@ async def chat(req: ChatRequest):
 
         stations_list = attach_chargers_and_bookings(stations_list)
 
-        #  EXTRA debug to confirm station_id + chargers attached
         log("[DBG]", f"station_ids_in_payload={[s.get('station_id') for s in stations_list]}")
         log("[DBG]", f"chargers_per_station={[(s.get('name'), len(s.get('chargers') or [])) for s in stations_list]}")
 
